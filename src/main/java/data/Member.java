@@ -1,11 +1,13 @@
 package data;
 
+import config.StringConstant;
+
 class Member{
     private String name;
-    private String type;
-    private String accessLevel;
+    private DataType type;
+    private StringConstant accessLevel;
 
-    public Member(String name, String type, String accessLevel) {
+    public Member(String name, DataType type, StringConstant accessLevel) {
         this.name = name;
         this.type = type;
         this.accessLevel = accessLevel;
@@ -19,19 +21,19 @@ class Member{
         this.name = name;
     }
 
-    public String getType() {
+    public DataType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(DataType type) {
         this.type = type;
     }
 
-    public String getAccessLevel() {
+    public StringConstant getAccessLevel() {
         return accessLevel;
     }
 
-    public void setAccessLevel(String accessLevel) {
+    public void setAccessLevel(StringConstant accessLevel) {
         this.accessLevel = accessLevel;
     }
 }

@@ -1,7 +1,9 @@
 package data;
 
-class FieldMember extends Member{
-    public FieldMember(String name, String type, String accessLevel) {
+import config.StringConstant;
+
+public class FieldMember extends Member{
+    public FieldMember(String name, DataType type, StringConstant accessLevel) {
         super(name, type, accessLevel);
     }
 }

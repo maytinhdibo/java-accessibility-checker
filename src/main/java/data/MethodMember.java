@@ -1,11 +1,13 @@
 package data;
 
+import config.StringConstant;
+
 import java.util.ArrayList;
 import java.util.List;
 
-class MethodMember extends Member{
+public class MethodMember extends Member{
     private List<String> params = new ArrayList<>();
-    public MethodMember(String name, String type, String accessLevel) {
+    public MethodMember(String name, DataType type, StringConstant accessLevel) {
         super(name, type, accessLevel);
     }
 

@@ -10,7 +10,7 @@ public class ClassModel {
     private String classId;
     private boolean isInterface;
     private StringConstant modifier;
-    private List<MethodMember> members = new ArrayList<>();
+    private List<Member> members = new ArrayList<>();
 
     public ClassModel(String packageName, String classId, boolean isInterface, StringConstant modifier) {
         this.packageName = packageName;
@@ -51,11 +51,11 @@ public class ClassModel {
         this.classId = classId;
     }
 
-    public List<MethodMember> getMembers() {
+    public List<Member> getMembers() {
         return members;
     }
 
-    public void addMember(MethodMember method){
+    public void addMember(Member method){
         this.members.add(method);
     }
 }
