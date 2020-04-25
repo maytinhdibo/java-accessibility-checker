@@ -17,7 +17,7 @@ public class SymbolSolver {
                     Log.write("\t" + be.toString() + " is a: " + resolvedType);
                 }
             } catch (Exception e) {
-                System.out.println("NOT SUPPORT: " + be.toString());
+                Log.warning("NOT SUPPORT: " + be.toString());
 //                e.printStackTrace();
             }
         });

@@ -11,6 +11,16 @@ public class Log {
         write(line, "log.txt");
     }
 
+    public static void error(String line) {
+        System.err.println("ERROR: "+ line);
+        write(line, "error.txt");
+    }
+    public static void warning(String line) {
+        System.err.println("WARNING: "+ line);
+        write(line, "warning.txt");
+    }
+
+
     public static void write(String line, String filename) {
         File output = new File(Config.LOG_DIR + filename);
         try {

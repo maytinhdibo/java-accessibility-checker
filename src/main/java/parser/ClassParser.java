@@ -30,7 +30,7 @@ public class ClassParser {
             } else if (member instanceof MethodDeclaration) {
                 parseMethod(classModel, (MethodDeclaration) member);
             } else {
-                System.out.println(member.toString() + ": Member of class is not support");
+                Log.error(member.toString() + ": Member of class is not support");
             }
         });
     }
@@ -74,9 +74,9 @@ public class ClassParser {
         Log.write("Package: " + packageName);
         cuFile.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
             String classId = String.join(".", Arrays.asList(packageName, klass.getNameAsString()));
-            Boolean isInteface = klass.isInterface();
+            Boolean isInterface = klass.isInterface();
             StringConstant modifier = parseModifier(klass.getModifiers());
-            ClassModel classModel = new ClassModel(packageName, classId, isInteface, modifier);
+            ClassModel classModel = new ClassModel(packageName, classId, isInterface, modifier);
             System.out.println(classModel.getClassId());
             classListModel.put(classId, classModel);
             parseMember(classModel, klass);
