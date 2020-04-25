@@ -1,12 +1,10 @@
 package config;
 
 public enum StringConstant {
-    START("START"),
-    END("END"),
-    CLASS("CLASS"),
-    METHOD("METHOD"),
-    TYPE("TYPE"),
-    VAR("VAR");
+    DEFAULT("default"),
+    PUBLIC("public"),
+    PRIVATE("private"),
+    PROTECTED("protected");
 
     private String value;
 
