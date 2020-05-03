@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.Type;
 import config.StringConstant;
 import data.ClassModel;
@@ -31,7 +32,7 @@ public class ClassParser {
                 parseMethod(classModel, (MethodDeclaration) member);
             } else if (member instanceof ConstructorDeclaration) {
                 parseConstructor(classModel, (ConstructorDeclaration) member);
-            }else {
+            } else {
                 Log.error(member.toString() + ": Member of class is not support");
             }
         });
@@ -48,11 +49,7 @@ public class ClassParser {
             String name = variable.getName().toString();
             Type type = variable.getType();
             DataType dataType;
-            if (type.isPrimitiveType()) {
-                dataType = new DataType(type.toString(), true);
-            } else {
-                dataType = new DataType(type.toString(), "needfill");
-            }
+            dataType = parseType(type);
             FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
             classModel.addMember(fieldMember);
         });
@@ -60,6 +57,17 @@ public class ClassParser {
 
     public static void parseMethod(ClassModel classModel, MethodDeclaration method) {
 
+    }
+
+    public static DataType parseType(Type type) {
+        if (type instanceof ArrayType) return null;
+        if (type.isPrimitiveType()) {
+            return new DataType(type.toString(), true);
+        } else {
+            String typeId = type.resolve().asReferenceType().getTypeDeclaration().getId();
+            String typeName = type.toString();
+            return new DataType(typeId, type.toString());
+        }
     }
 
     public static StringConstant parseAccessModifier(NodeList modifiers) {
@@ -85,10 +93,11 @@ public class ClassParser {
         String packageName = cuFile.getPackageDeclaration().get().getName().toString();
         Log.write("Package: " + packageName);
         cuFile.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
-            String classId = String.join(".", Arrays.asList(packageName, klass.getNameAsString()));
+            String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();
             Boolean isInterface = klass.isInterface();
             StringConstant accessModifier = parseAccessModifier(klass.getModifiers());
             ClassModel classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
+            System.out.println(classModel.getClassId());
             System.out.println(classModel.getClassId());
             classListModel.put(classId, classModel);
             parseMember(classModel, klass);
