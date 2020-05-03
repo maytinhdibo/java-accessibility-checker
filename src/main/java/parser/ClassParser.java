@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ArrayType;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import config.StringConstant;
 import data.ClassModel;
@@ -23,6 +24,7 @@ import static parser.Parser.classListModel;
 
 public class ClassParser {
     private List<ClassModel> listClassModel = new ArrayList<>();
+    private Object b;
 
     public static void parseMember(ClassModel classModel, ClassOrInterfaceDeclaration klass) {
         klass.getMembers().forEach(member -> {
@@ -49,7 +51,7 @@ public class ClassParser {
             String name = variable.getName().toString();
             Type type = variable.getType();
             DataType dataType;
-            dataType = parseType(type);
+            dataType = parseType(type, false);
             FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
             classModel.addMember(fieldMember);
         });
@@ -59,14 +61,24 @@ public class ClassParser {
 
     }
 
-    public static DataType parseType(Type type) {
-        if (type instanceof ArrayType) return null;
+    public static DataType parseType(Type type, boolean isArray) {
+        if (type instanceof ArrayType) return parseType(((ArrayType) type).getComponentType(), true);
         if (type.isPrimitiveType()) {
-            return new DataType(type.toString(), true);
+            return new DataType(type.toString(), true, isArray);
         } else {
             String typeId = type.resolve().asReferenceType().getTypeDeclaration().getId();
             String typeName = type.toString();
-            return new DataType(typeId, type.toString());
+            DataType result = new DataType(typeId, typeName, isArray);
+            if (type instanceof ClassOrInterfaceType) {
+                ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) type;
+                result.setName(classOrInterfaceType.getNameAsString());
+                if (classOrInterfaceType.getTypeArguments().isPresent()) {
+                    classOrInterfaceType.getTypeArguments().get().forEach(typeArg -> {
+                        if (typeArg instanceof Type) result.addTypeArg(parseType(typeArg, false));
+                    });
+                }
+            }
+            return result;
         }
     }
 
