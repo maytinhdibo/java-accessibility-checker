@@ -5,12 +5,12 @@ import config.StringConstant;
 class Member{
     private String name;
     private DataType type;
-    private StringConstant accessLevel;
+    private StringConstant accessModifier;
 
-    public Member(String name, DataType type, StringConstant accessLevel) {
+    public Member(String name, DataType type, StringConstant accessModifier) {
         this.name = name;
         this.type = type;
-        this.accessLevel = accessLevel;
+        this.accessModifier = accessModifier;
     }
 
     public String getName() {
@@ -29,11 +29,11 @@ class Member{
         this.type = type;
     }
 
-    public StringConstant getAccessLevel() {
-        return accessLevel;
+    public StringConstant getAccessModifier() {
+        return accessModifier;
     }
 
-    public void setAccessLevel(StringConstant accessLevel) {
-        this.accessLevel = accessLevel;
+    public void setAccessModifier(StringConstant accessModifier) {
+        this.accessModifier = accessModifier;
     }
 }

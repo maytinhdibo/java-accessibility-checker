@@ -9,14 +9,14 @@ public class ClassModel {
     private String packageName;
     private String classId;
     private boolean isInterface;
-    private StringConstant modifier;
+    private StringConstant accessModifier;
     private List<Member> members = new ArrayList<>();
 
-    public ClassModel(String packageName, String classId, boolean isInterface, StringConstant modifier) {
+    public ClassModel(String packageName, String classId, boolean isInterface, StringConstant accessModifier) {
         this.packageName = packageName;
         this.classId = classId;
         this.isInterface = isInterface;
-        this.modifier = modifier;
+        this.accessModifier = accessModifier;
     }
 
     public boolean isInterface() {
@@ -27,12 +27,12 @@ public class ClassModel {
         isInterface = anInterface;
     }
 
-    public StringConstant getModifier() {
-        return modifier;
+    public StringConstant getAccessModifier() {
+        return accessModifier;
     }
 
-    public void setModifier(StringConstant modifier) {
-        this.modifier = modifier;
+    public void setAccessModifier(StringConstant accessModifier) {
+        this.accessModifier = accessModifier;
     }
 
     public String getPackageName() {
