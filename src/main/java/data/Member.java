@@ -36,4 +36,9 @@ class Member{
     public void setAccessModifier(StringConstant accessModifier) {
         this.accessModifier = accessModifier;
     }
+
+    @Override
+    public String toString() {
+        return this.name;
+    }
 }
