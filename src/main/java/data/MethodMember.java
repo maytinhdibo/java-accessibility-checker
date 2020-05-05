@@ -6,16 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MethodMember extends Member{
-    private List<String> params = new ArrayList<>();
+    private List<DataType> params = new ArrayList<>();
     public MethodMember(String name, DataType type, StringConstant accessLevel) {
         super(name, type, accessLevel);
     }
 
-    public List<String> getParams() {
+    public List<DataType> getParams() {
         return params;
     }
 
-    public void addParam(String param) {
+    public void addParam(DataType param) {
         this.params.add(param);
     }
 }

@@ -10,10 +10,12 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.ast.type.VoidType;
 import config.StringConstant;
 import data.ClassModel;
 import data.DataType;
 import data.FieldMember;
+import data.MethodMember;
 import utils.Log;
 
 import java.util.ArrayList;
@@ -50,21 +52,38 @@ public class ClassParser {
         field.getVariables().forEach(variable -> {
             String name = variable.getName().toString();
             Type type = variable.getType();
-            DataType dataType;
-            dataType = parseType(type, false);
+            DataType dataType = parseType(type);
             FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
             classModel.addMember(fieldMember);
         });
     }
 
     public static void parseMethod(ClassModel classModel, MethodDeclaration method) {
+        StringConstant accessModifier = parseAccessModifier(method.getModifiers());
+        Type type = method.getType();
+        String name = method.getName().toString();
+        DataType dataType = parseType(type, false);
+        MethodMember methodMember = new MethodMember(name, dataType, accessModifier);
+        method.getParameters().forEach(parameter -> {
+            DataType paramType = parseType(parameter.getType());
+            methodMember.addParam(paramType);
+        });
+        classModel.addMember(methodMember);
+    }
 
+    public static DataType parseType(Type type){
+        return parseType(type, false);
     }
 
     public static DataType parseType(Type type, boolean isArray) {
         if (type instanceof ArrayType) return parseType(((ArrayType) type).getComponentType(), true);
+
         if (type.isPrimitiveType()) {
             return new DataType(type.toString(), true, isArray);
+        } else if (type instanceof VoidType) {
+            DataType voidType = new DataType(StringConstant.VOID.toString(), true, false);
+            voidType.setVoid(true);
+            return voidType;
         } else {
             String typeId = type.resolve().asReferenceType().getTypeDeclaration().getId();
             String typeName = type.toString();

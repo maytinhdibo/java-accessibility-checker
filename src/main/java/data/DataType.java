@@ -7,6 +7,7 @@ public class DataType {
     private String name, id;
     private boolean isPrimitive;
     private boolean isArray;
+    private boolean isVoid = false;
     private List<DataType> typeArgs = new ArrayList<>();
 
     public DataType(String id, String name, boolean isArray) {
@@ -45,6 +46,14 @@ public class DataType {
 
     public boolean isArray() {
         return isArray;
+    }
+
+    public boolean isVoid() {
+        return isVoid;
+    }
+
+    public void setVoid(boolean aVoid) {
+        isVoid = aVoid;
     }
 
     public void setName(String name) {
