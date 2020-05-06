@@ -2,20 +2,20 @@ package data;
 
 import config.StringConstant;
 
-import java.util.ArrayList;
-import java.util.List;
+public class MethodMember extends MemberWithParams {
+    protected DataType type;
 
-public class MethodMember extends Member{
-    private List<DataType> params = new ArrayList<>();
+
     public MethodMember(String name, DataType type, StringConstant accessLevel) {
-        super(name, type, accessLevel);
+        super(name, accessLevel);
+        this.type = type;
     }
 
-    public List<DataType> getParams() {
-        return params;
+    public DataType getType() {
+        return type;
     }
 
-    public void addParam(DataType param) {
-        this.params.add(param);
+    public void setType(DataType type) {
+        this.type = type;
     }
 }

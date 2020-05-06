@@ -12,10 +12,7 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.VoidType;
 import config.StringConstant;
-import data.ClassModel;
-import data.DataType;
-import data.FieldMember;
-import data.MethodMember;
+import data.*;
 import utils.Log;
 
 import java.util.ArrayList;
@@ -42,11 +39,6 @@ public class ClassParser {
         });
     }
 
-    public static void parseConstructor(ClassModel classModel, ConstructorDeclaration constructor) {
-
-    }
-
-
     public static void parseField(ClassModel classModel, FieldDeclaration field) {
         StringConstant accessModifier = parseAccessModifier(field.getModifiers());
         field.getVariables().forEach(variable -> {
@@ -56,6 +48,18 @@ public class ClassParser {
             FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
             classModel.addMember(fieldMember);
         });
+    }
+
+
+    public static void parseConstructor(ClassModel classModel, ConstructorDeclaration constructor) {
+        StringConstant accessModifier = parseAccessModifier(constructor.getModifiers());
+        String name = constructor.getNameAsString();
+        ConstructorMember constructorMember = new ConstructorMember(name, accessModifier);
+        constructor.getParameters().forEach(parameter -> {
+            DataType paramType = parseType(parameter.getType());
+            constructorMember.addParam(paramType);
+        });
+        classModel.addMember(constructorMember);
     }
 
     public static void parseMethod(ClassModel classModel, MethodDeclaration method) {
@@ -71,7 +75,7 @@ public class ClassParser {
         classModel.addMember(methodMember);
     }
 
-    public static DataType parseType(Type type){
+    public static DataType parseType(Type type) {
         return parseType(type, false);
     }
 

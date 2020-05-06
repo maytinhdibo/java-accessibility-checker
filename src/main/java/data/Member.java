@@ -3,13 +3,11 @@ package data;
 import config.StringConstant;
 
 class Member{
-    private String name;
-    private DataType type;
-    private StringConstant accessModifier;
+    protected String name;
+    protected StringConstant accessModifier;
 
-    public Member(String name, DataType type, StringConstant accessModifier) {
+    public Member(String name, StringConstant accessModifier) {
         this.name = name;
-        this.type = type;
         this.accessModifier = accessModifier;
     }
 
@@ -19,14 +17,6 @@ class Member{
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public DataType getType() {
-        return type;
-    }
-
-    public void setType(DataType type) {
-        this.type = type;
     }
 
     public StringConstant getAccessModifier() {
