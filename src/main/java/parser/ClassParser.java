@@ -23,6 +23,7 @@ import java.util.List;
 public class ClassParser {
 
     private ClassModel classModel;
+    private MethodMember curMethod = null;
 
     public void parseMember(ClassOrInterfaceDeclaration klass) {
         klass.getMembers().forEach(member -> {
@@ -68,13 +69,23 @@ public class ClassParser {
         StringConstant accessModifier = parseAccessModifier(method.getModifiers());
         Type type = method.getType();
         String name = method.getName().toString();
-        DataType dataType = parseType(type, false);
-        MethodMember methodMember = new MethodMember(name, dataType, accessModifier);
+        MethodMember methodMember = new MethodMember(name, null, accessModifier);
+        //parse generic type
+        method.getTypeParameters().forEach(genericType -> {
+            methodMember.addGenericType(genericType.asString());
+        });
+
+        curMethod = methodMember;
+        DataType dataType = parseType(type);
+        methodMember.setType(dataType);
         method.getParameters().forEach(parameter -> {
             DataType paramType = parseType(parameter.getType());
             methodMember.addParam(paramType);
         });
+        curMethod = null;
         methodMember.setParentClass(classModel);
+
+
         classModel.addMember(methodMember);
     }
 
@@ -119,6 +130,7 @@ public class ClassParser {
 
     public boolean resolveGenericType(String name) {
         if (classModel.getGenericTypes().contains(name)) return true;
+        if (curMethod != null && curMethod.getGenericTypes().contains(name)) return true;
         return false;
     }
 
@@ -148,7 +160,7 @@ public class ClassParser {
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
         System.out.println(classModel.getClassId());
         classListModel.put(classId, classModel);
-
+        //parse generic type
         klass.getTypeParameters().forEach(genericType -> {
             classModel.addGenericType(genericType.asString());
         });
