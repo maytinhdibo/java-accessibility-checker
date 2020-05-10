@@ -2,6 +2,7 @@ package parser;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
 import com.github.javaparser.resolution.types.ResolvedType;
@@ -24,6 +25,7 @@ import java.util.List;
 
 public class Parser {
     public static HashMap<String, ClassModel> classListModel = new HashMap<>();
+
     public static void main(String[] args) {
         // Set up a minimal type solver that only looks at the classes used to run this sample.
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
@@ -45,8 +47,11 @@ public class Parser {
             CompilationUnit compilationUnit = StaticJavaParser.parse(data);
             SymbolSolver.resolvedType(compilationUnit);
 
-            ClassParser classParser = new ClassParser();
-            classParser.parse(compilationUnit);
+            String packageName = compilationUnit.getPackageDeclaration().get().getName().toString();
+            compilationUnit.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
+                ClassParser classParser = new ClassParser();
+                classParser.parse(klass, packageName, classListModel);
+            });
         }
     }
 

@@ -17,4 +17,5 @@ public class FieldMember extends Member {
     public void setType(DataType type) {
         this.type = type;
     }
+
 }

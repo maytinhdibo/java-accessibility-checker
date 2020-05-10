@@ -8,6 +8,7 @@ public class DataType {
     private boolean isPrimitive;
     private boolean isArray;
     private boolean isVoid = false;
+    private boolean isGenericType = false;
     private List<DataType> typeArgs = new ArrayList<>();
 
     public DataType(String id, String name, boolean isArray) {
@@ -22,6 +23,14 @@ public class DataType {
         this.id = "";
         this.isPrimitive = isPrimitive;
         this.isArray = isArray;
+    }
+
+    public boolean isGenericType() {
+        return isGenericType;
+    }
+
+    public void setGenericType(boolean genericType) {
+        isGenericType = genericType;
     }
 
     public void addTypeArg(DataType typeArg) {
@@ -66,6 +75,8 @@ public class DataType {
 
     @Override
     public String toString() {
-        return id.length() > 0 ? id : name;
+        String name = id.length() > 0 ? id : this.name;
+        if (isArray) name = name + "[]";
+        return name;
     }
 }

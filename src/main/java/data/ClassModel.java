@@ -11,6 +11,7 @@ public class ClassModel {
     private boolean isInterface;
     private StringConstant accessModifier;
     private List<Member> members = new ArrayList<>();
+    private List<String> genericTypes = new ArrayList<>();
 
     public ClassModel(String packageName, String classId, boolean isInterface, StringConstant accessModifier) {
         this.packageName = packageName;
@@ -55,7 +56,15 @@ public class ClassModel {
         return members;
     }
 
-    public void addMember(Member method){
+    public List<String> getGenericTypes() {
+        return genericTypes;
+    }
+
+    public void addGenericType(String genericType) {
+        this.genericTypes.add(genericType);
+    }
+
+    public void addMember(Member method) {
         this.members.add(method);
     }
 }

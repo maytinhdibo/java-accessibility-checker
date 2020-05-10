@@ -1,10 +1,12 @@
 package parser;
 
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
 import com.github.javaparser.resolution.types.ResolvedType;
 import utils.Log;
+
 
 public class SymbolSolver {
     public static void resolvedType(CompilationUnit cu) {
@@ -21,4 +23,5 @@ public class SymbolSolver {
             }
         });
     }
+
 }

@@ -5,6 +5,7 @@ import config.StringConstant;
 class Member{
     protected String name;
     protected StringConstant accessModifier;
+    protected ClassModel parentClass;
 
     public Member(String name, StringConstant accessModifier) {
         this.name = name;
@@ -25,6 +26,14 @@ class Member{
 
     public void setAccessModifier(StringConstant accessModifier) {
         this.accessModifier = accessModifier;
+    }
+
+    public ClassModel getParentClass() {
+        return parentClass;
+    }
+
+    public void setParentClass(ClassModel parentClass) {
+        this.parentClass = parentClass;
     }
 
     @Override

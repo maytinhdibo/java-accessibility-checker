@@ -17,41 +17,42 @@ import utils.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
-import static parser.Parser.classListModel;
-
 public class ClassParser {
-    private List<ClassModel> listClassModel = new ArrayList<>();
-    private Object b;
 
-    public static void parseMember(ClassModel classModel, ClassOrInterfaceDeclaration klass) {
+    private ClassModel classModel;
+
+    public void parseMember(ClassOrInterfaceDeclaration klass) {
         klass.getMembers().forEach(member -> {
             if (member instanceof FieldDeclaration) {
-                parseField(classModel, (FieldDeclaration) member);
+                parseField((FieldDeclaration) member);
             } else if (member instanceof MethodDeclaration) {
-                parseMethod(classModel, (MethodDeclaration) member);
+                parseMethod((MethodDeclaration) member);
             } else if (member instanceof ConstructorDeclaration) {
-                parseConstructor(classModel, (ConstructorDeclaration) member);
+                parseConstructor((ConstructorDeclaration) member);
             } else {
                 Log.error(member.toString() + ": Member of class is not support");
+                return;
             }
         });
     }
 
-    public static void parseField(ClassModel classModel, FieldDeclaration field) {
+    public void parseField(FieldDeclaration field) {
         StringConstant accessModifier = parseAccessModifier(field.getModifiers());
         field.getVariables().forEach(variable -> {
             String name = variable.getName().toString();
             Type type = variable.getType();
             DataType dataType = parseType(type);
             FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
+            fieldMember.setParentClass(classModel);
             classModel.addMember(fieldMember);
         });
     }
 
 
-    public static void parseConstructor(ClassModel classModel, ConstructorDeclaration constructor) {
+    public void parseConstructor(ConstructorDeclaration constructor) {
         StringConstant accessModifier = parseAccessModifier(constructor.getModifiers());
         String name = constructor.getNameAsString();
         ConstructorMember constructorMember = new ConstructorMember(name, accessModifier);
@@ -59,10 +60,11 @@ public class ClassParser {
             DataType paramType = parseType(parameter.getType());
             constructorMember.addParam(paramType);
         });
+        constructorMember.setParentClass(classModel);
         classModel.addMember(constructorMember);
     }
 
-    public static void parseMethod(ClassModel classModel, MethodDeclaration method) {
+    public void parseMethod(MethodDeclaration method) {
         StringConstant accessModifier = parseAccessModifier(method.getModifiers());
         Type type = method.getType();
         String name = method.getName().toString();
@@ -72,14 +74,15 @@ public class ClassParser {
             DataType paramType = parseType(parameter.getType());
             methodMember.addParam(paramType);
         });
+        methodMember.setParentClass(classModel);
         classModel.addMember(methodMember);
     }
 
-    public static DataType parseType(Type type) {
+    public DataType parseType(Type type) {
         return parseType(type, false);
     }
 
-    public static DataType parseType(Type type, boolean isArray) {
+    public DataType parseType(Type type, boolean isArray) {
         if (type instanceof ArrayType) return parseType(((ArrayType) type).getComponentType(), true);
 
         if (type.isPrimitiveType()) {
@@ -89,9 +92,18 @@ public class ClassParser {
             voidType.setVoid(true);
             return voidType;
         } else {
-            String typeId = type.resolve().asReferenceType().getTypeDeclaration().getId();
+            String typeId = "";
             String typeName = type.toString();
+
+            boolean isGenericType = false;
+            try {
+                typeId = type.resolve().asReferenceType().getTypeDeclaration().getId();
+            } catch (UnsupportedOperationException err) {
+                if (resolveGenericType(typeName)) isGenericType = true;
+                else throw err;
+            }
             DataType result = new DataType(typeId, typeName, isArray);
+            if (isGenericType) result.setGenericType(true);
             if (type instanceof ClassOrInterfaceType) {
                 ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) type;
                 result.setName(classOrInterfaceType.getNameAsString());
@@ -103,6 +115,11 @@ public class ClassParser {
             }
             return result;
         }
+    }
+
+    public boolean resolveGenericType(String name) {
+        if (classModel.getGenericTypes().contains(name)) return true;
+        return false;
     }
 
     public static StringConstant parseAccessModifier(NodeList modifiers) {
@@ -124,19 +141,18 @@ public class ClassParser {
         return StringConstant.DEFAULT;
     }
 
-    public void parse(CompilationUnit cuFile) {
-        String packageName = cuFile.getPackageDeclaration().get().getName().toString();
-        Log.write("Package: " + packageName);
-        cuFile.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
-            String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();
-            Boolean isInterface = klass.isInterface();
-            StringConstant accessModifier = parseAccessModifier(klass.getModifiers());
-            ClassModel classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
-            System.out.println(classModel.getClassId());
-            System.out.println(classModel.getClassId());
-            classListModel.put(classId, classModel);
-            parseMember(classModel, klass);
+    public void parse(ClassOrInterfaceDeclaration klass, String packageName, HashMap<String, ClassModel> classListModel) {
+        String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();
+        Boolean isInterface = klass.isInterface();
+        StringConstant accessModifier = parseAccessModifier(klass.getModifiers());
+        classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
+        System.out.println(classModel.getClassId());
+        classListModel.put(classId, classModel);
+
+        klass.getTypeParameters().forEach(genericType -> {
+            classModel.addGenericType(genericType.asString());
         });
+        parseMember(klass);
     }
 
 }
