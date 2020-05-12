@@ -1,92 +1,28 @@
 package parser;
 
-import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.VoidType;
 import config.StringConstant;
-import data.*;
-import utils.Log;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import data.ClassModel;
+import data.DataType;
+import data.MethodMember;
 
 public class ClassParser {
+    protected ClassModel classModel = null;
+    protected MethodMember curMethod = null;
 
-    private ClassModel classModel;
-    private MethodMember curMethod = null;
-
-    public void parseMember(ClassOrInterfaceDeclaration klass) {
-        klass.getMembers().forEach(member -> {
-            if (member instanceof FieldDeclaration) {
-                parseField((FieldDeclaration) member);
-            } else if (member instanceof MethodDeclaration) {
-                parseMethod((MethodDeclaration) member);
-            } else if (member instanceof ConstructorDeclaration) {
-                parseConstructor((ConstructorDeclaration) member);
-            } else {
-                Log.error(member.toString() + ": Member of class is not support");
-                return;
-            }
-        });
+    public boolean resolveGenericType(String name) {
+        if (classModel.getGenericTypes().contains(name)) return true;
+        if (curMethod != null && curMethod.getGenericTypes().contains(name)) return true;
+        return false;
     }
 
-    public void parseField(FieldDeclaration field) {
-        StringConstant accessModifier = parseAccessModifier(field.getModifiers());
-        field.getVariables().forEach(variable -> {
-            String name = variable.getName().toString();
-            Type type = variable.getType();
-            DataType dataType = parseType(type);
-            FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
-            fieldMember.setParentClass(classModel);
-            classModel.addMember(fieldMember);
-        });
-    }
-
-
-    public void parseConstructor(ConstructorDeclaration constructor) {
-        StringConstant accessModifier = parseAccessModifier(constructor.getModifiers());
-        String name = constructor.getNameAsString();
-        ConstructorMember constructorMember = new ConstructorMember(name, accessModifier);
-        constructor.getParameters().forEach(parameter -> {
-            DataType paramType = parseType(parameter.getType());
-            constructorMember.addParam(paramType);
-        });
-        constructorMember.setParentClass(classModel);
-        classModel.addMember(constructorMember);
-    }
-
-    public void parseMethod(MethodDeclaration method) {
-        StringConstant accessModifier = parseAccessModifier(method.getModifiers());
-        Type type = method.getType();
-        String name = method.getName().toString();
-        MethodMember methodMember = new MethodMember(name, null, accessModifier);
-        //parse generic type
-        method.getTypeParameters().forEach(genericType -> {
-            methodMember.addGenericType(genericType.asString());
-        });
-
-        curMethod = methodMember;
-        DataType dataType = parseType(type);
-        methodMember.setType(dataType);
-        method.getParameters().forEach(parameter -> {
-            DataType paramType = parseType(parameter.getType());
-            methodMember.addParam(paramType);
-        });
-        curMethod = null;
-        methodMember.setParentClass(classModel);
-
-
-        classModel.addMember(methodMember);
+    //parse generic type
+    protected void parseGenericType() {
     }
 
     public DataType parseType(Type type) {
@@ -128,43 +64,16 @@ public class ClassParser {
         }
     }
 
-    public boolean resolveGenericType(String name) {
-        if (classModel.getGenericTypes().contains(name)) return true;
-        if (curMethod != null && curMethod.getGenericTypes().contains(name)) return true;
-        return false;
-    }
-
-    public static StringConstant parseAccessModifier(NodeList modifiers) {
-        if (modifiers.size() != 0) {
-            for (Object item : modifiers) {
-                Modifier modifier = (Modifier) item;
-                switch (modifier.getKeyword().name().toLowerCase()) {
-                    case "public":
-                        return StringConstant.PUBLIC;
-                    case "private":
-                        return StringConstant.PRIVATE;
-                    case "protected":
-                        return StringConstant.PROTECTED;
-                    default:
-                        break;
-                }
-            }
+    public static StringConstant getAccessModifier(String word) {
+        switch (word.toLowerCase()) {
+            case "public":
+                return StringConstant.PUBLIC;
+            case "private":
+                return StringConstant.PRIVATE;
+            case "protected":
+                return StringConstant.PROTECTED;
+            default:
+                return StringConstant.DEFAULT;
         }
-        return StringConstant.DEFAULT;
     }
-
-    public void parse(ClassOrInterfaceDeclaration klass, String packageName, HashMap<String, ClassModel> classListModel) {
-        String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();
-        Boolean isInterface = klass.isInterface();
-        StringConstant accessModifier = parseAccessModifier(klass.getModifiers());
-        classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
-        System.out.println(classModel.getClassId());
-        classListModel.put(classId, classModel);
-        //parse generic type
-        klass.getTypeParameters().forEach(genericType -> {
-            classModel.addGenericType(genericType.asString());
-        });
-        parseMember(klass);
-    }
-
 }

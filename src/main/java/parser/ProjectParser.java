@@ -3,9 +3,6 @@ package parser;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
-import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -23,10 +20,19 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public class Parser {
-    public static HashMap<String, ClassModel> classListModel = new HashMap<>();
+public class ProjectParser {
+    public HashMap<String, ClassModel> classListModel = new HashMap<>();
 
     public static void main(String[] args) {
+        ProjectParser projectParser = new ProjectParser();
+        projectParser.parse();
+    }
+
+    public void addClass(ClassModel classModel) {
+        classListModel.put(classModel.getClassId(), classModel);
+    }
+
+    public void parse() {
         // Set up a minimal type solver that only looks at the classes used to run this sample.
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
@@ -49,8 +55,8 @@ public class Parser {
 
             String packageName = compilationUnit.getPackageDeclaration().get().getName().toString();
             compilationUnit.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
-                ClassParser classParser = new ClassParser();
-                classParser.parse(klass, packageName, classListModel);
+                ProjectClassParser classParser = new ProjectClassParser();
+                classParser.parse(klass, packageName, this);
             });
         }
     }
