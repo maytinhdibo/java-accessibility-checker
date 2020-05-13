@@ -29,4 +29,13 @@ public class MethodMember extends MemberWithParams {
     public void addGenericType(String genericType) {
         this.genericTypes.add(genericType);
     }
+
+    @Override
+    public String toString() {
+        List<String> paramsAsString = new ArrayList<>();
+        params.forEach(param -> {
+            paramsAsString.add(param.toString());
+        });
+        return accessModifier.toString() + " " + type.toString() + " " + super.name + "(" + String.join(", ", paramsAsString) + ")";
+    }
 }

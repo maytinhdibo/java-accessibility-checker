@@ -5,7 +5,9 @@ public enum StringConstant {
     PUBLIC("public"),
     PRIVATE("private"),
     PROTECTED("protected"),
-    VOID("void");
+    VOID("void"),
+    RESOLVED("resolved"),
+    GENERIC("generic");
 
     private String value;
 

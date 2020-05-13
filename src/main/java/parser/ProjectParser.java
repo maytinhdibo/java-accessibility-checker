@@ -55,8 +55,8 @@ public class ProjectParser {
 
             String packageName = compilationUnit.getPackageDeclaration().get().getName().toString();
             compilationUnit.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
-                ProjectClassParser classParser = new ProjectClassParser();
-                classParser.parse(klass, packageName, this);
+                ProjectClassParser classParser = new ProjectClassParser(klass, packageName, this);
+                classParser.parse();
             });
         }
     }

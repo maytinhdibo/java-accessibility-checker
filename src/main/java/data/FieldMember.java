@@ -18,4 +18,8 @@ public class FieldMember extends Member {
         this.type = type;
     }
 
+    @Override
+    public String toString() {
+        return accessModifier + " " + type + " " + name;
+    }
 }

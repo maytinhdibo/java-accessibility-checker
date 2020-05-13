@@ -18,6 +18,15 @@ import java.util.HashMap;
 
 public class ProjectClassParser extends ClassParser {
 
+
+    protected ClassOrInterfaceDeclaration klass;
+
+    public ProjectClassParser(ClassOrInterfaceDeclaration klass, String packageName, ProjectParser projectParser) {
+        this.klass = klass;
+        this.packageName = packageName;
+        this.projectParser = projectParser;
+    }
+
     public void parseMember(ClassOrInterfaceDeclaration klass) {
         klass.getMembers().forEach(member -> {
             if (member instanceof FieldDeclaration) {
@@ -100,12 +109,12 @@ public class ProjectClassParser extends ClassParser {
         });
     }
 
-    public ClassModel parse(ClassOrInterfaceDeclaration klass, String packageName, ProjectParser projectParser) {
+    public ClassModel parse() {
         //parse resolve
         try {
             Object resolveClass = klass.resolve();
             if (resolveClass instanceof JavaParserClassDeclaration)
-                return new ReflectionClassParser().parse((JavaParserClassDeclaration) resolveClass, projectParser);
+                return new ReflectionClassParser((JavaParserClassDeclaration) resolveClass, projectParser).parse();
         } catch (Exception e) {
             e.printStackTrace();
         }
