@@ -7,9 +7,11 @@ import java.util.List;
 
 public class MemberWithParams extends Member {
     protected List<DataType> params = new ArrayList<>();
+
     public MemberWithParams(String name, StringConstant accessModifier) {
         super(name, accessModifier);
     }
+
     public List<DataType> getParams() {
         return params;
     }
@@ -24,6 +26,6 @@ public class MemberWithParams extends Member {
         params.forEach(param -> {
             paramsAsString.add(param.toString());
         });
-        return super.name + "(" + String.join(", ", paramsAsString) + ")";
+        return accessModifier.toString() + " " + super.name + "(" + String.join(", ", paramsAsString) + ")";
     }
 }
