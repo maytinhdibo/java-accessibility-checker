@@ -10,6 +10,15 @@ public class DataType {
     private boolean isVoid = false;
     private boolean isGenericType = false;
     private List<DataType> typeArgs = new ArrayList<>();
+    private String parseFrom;
+
+    public String getParseFrom() {
+        return parseFrom;
+    }
+
+    public void setParseFrom(String parseFrom) {
+        this.parseFrom = parseFrom;
+    }
 
     public DataType(String id, String name, boolean isArray) {
         this.name = name;

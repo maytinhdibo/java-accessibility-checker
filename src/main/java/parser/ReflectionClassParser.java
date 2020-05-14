@@ -1,3 +1,4 @@
+
 package parser;
 
 import com.github.javaparser.ast.NodeList;
@@ -7,6 +8,7 @@ import com.github.javaparser.resolution.declarations.ResolvedClassDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedVoidType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
@@ -14,10 +16,7 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
 import com.github.javaparser.utils.Pair;
 import config.StringConstant;
-import data.ClassModel;
-import data.DataType;
-import data.FieldMember;
-import data.MethodMember;
+import data.*;
 
 import java.util.*;
 
@@ -150,25 +149,28 @@ public class ReflectionClassParser extends ClassParser {
             String typeId = "";
 
             boolean isGenericType = false;
+            String parseFrom = null;
             try {
                 typeId = type.asReferenceType().getTypeDeclaration().getId();
 //                typeName = typeId;
             } catch (UnsupportedOperationException err) {
-                if (resolveGenericType(typeName)) {
+                if (resolveGenericType(typeName) && type.asTypeParameter().getId().equals(classModel.getClassId() + "." + typeName)) {
                     isGenericType = true;
                 } else {
 //                    if (resolveClass.getClassName().equals("C")) {}
-                    Pair<StringConstant, String> resolveId = resolveExtendGenericType(resolveClass, typeName);
+                    ResolvedExtendedGenericType resolveId = resolveExtendGenericType(resolveClass, type);
                     if (resolveId != null) {
-                        if (resolveId.a == StringConstant.RESOLVED) typeId = resolveId.b;
-                        if (resolveId.a == StringConstant.GENERIC) {
-                            typeName = resolveId.b;
+                        if (resolveId.type == StringConstant.RESOLVED) typeId = resolveId.result;
+                        if (resolveId.type == StringConstant.GENERIC) {
+                            typeName = resolveId.result;
                             isGenericType = true;
+                            parseFrom = resolveId.parseFrom;
                         }
                     } else throw err;
                 }
             }
             DataType result = new DataType(typeId, typeName, isArray);
+            if (parseFrom != null) result.setParseFrom(parseFrom);
             if (isGenericType) result.setGenericType(true);
             if (type instanceof ClassOrInterfaceType) {
                 ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) type;
@@ -183,18 +185,48 @@ public class ReflectionClassParser extends ClassParser {
         }
     }
 
-    public Pair<StringConstant, String> resolveExtendGenericType(ResolvedClassDeclaration resolvedClassDeclaration, String name) {
-        if (!resolvedClassDeclaration.getSuperClass().isNull()) {
-            Optional<ResolvedType> result = resolvedClassDeclaration.getSuperClass().getGenericParameterByName(name);
-            if (result.isPresent()) {
-                try {
+    private Optional<ResolvedType> finded = null;
+    private ResolvedClassDeclaration findedClass;
+
+    public ResolvedExtendedGenericType resolveExtendGenericType(ResolvedClassDeclaration resolvedClassDeclaration, ResolvedType type) {
+        if (resolvedClassDeclaration == null) return null;
+        if (resolvedClassDeclaration.getSuperClass() != null) {
+            Optional<ResolvedType> result = resolvedClassDeclaration.getSuperClass().getGenericParameterByName(type.describe());
+
+            if (resolveClass.getClassName().equals("B") && type.describe().equals("K")) {
+                if (result.isPresent()) {
+                    Object b = result.get().describe();
+                    System.out.println("b");
+                }
+                System.out.println("a");
+            }
+
+            if (result.isPresent() && (result.get().isReference() || result.get().asTypeParameter().getId().equals(type.asTypeParameter().getId()))) {
+                if (result.get().isReferenceType()) {
+//                    if (resolveClass.getClassName().equals("C") && type.describe().equals("V")) {
+//                        System.out.println("a");
+//                    }
+                    Object re = result.get().describe();
                     String resolve = result.get().asReferenceType().describe();
-                    return new Pair<>(StringConstant.RESOLVED, resolve);
-                } catch (Exception e) {
-                    return new Pair<>(StringConstant.GENERIC, result.get().describe());
+                    return new ResolvedExtendedGenericType(StringConstant.RESOLVED, resolve, "");
+                } else {
+                    finded = result;
+                    findedClass = resolvedClassDeclaration;
+                    return resolveExtendGenericType(resolvedClassDeclaration.getSuperClass().getTypeDeclaration().asClass(), type);
                 }
             } else {
-                return resolveExtendGenericType(resolvedClassDeclaration.getSuperClass().getTypeDeclaration().asClass(), name);
+                return resolveExtendGenericType(resolvedClassDeclaration.getSuperClass().getTypeDeclaration().asClass(), type);
+            }
+        }
+        if (finded != null) {
+            Optional<ResolvedType> result = finded;
+            //khác class trả về type gốc
+//            Object c = result.get().is;
+            finded = null;
+            if (!findedClass.getId().equals(resolveClass.getId())) {
+                return new ResolvedExtendedGenericType(StringConstant.GENERIC, type.describe(), findedClass.getSuperClass().getId());
+            } else {
+                return new ResolvedExtendedGenericType(StringConstant.GENERIC, result.get().describe(), findedClass.getId());
             }
         }
         return null;
