@@ -80,9 +80,9 @@ public class ClassParser {
         }
     }
 
-    public static String getPackageName(String classId) throws Exception {
+    public static String getPackageName(String classId) {
         String[] classIdArr = classId.split("\\.");
-        if (classIdArr.length == 0) throw new Exception("Class value is null");
+        if (classIdArr.length == 0) return classId;
         classIdArr = Arrays.copyOf(classIdArr, classIdArr.length - 1);
         String classPackageName = String.join(".", classIdArr);
         return classPackageName;
@@ -91,13 +91,11 @@ public class ClassParser {
     public static boolean checkVisibleMember(StringConstant accessModifier, String classId, String memberClassId, String extendedId) {
         String classPackageName = null;
         String memberPackageName = null;
-        try {
-            classPackageName = getPackageName(classId);
-            memberPackageName = getPackageName(memberClassId);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        classPackageName = getPackageName(classId);
+        memberPackageName = getPackageName(memberClassId);
+
+
         if (memberClassId.equals(classId)) {
             //class declare
             return true;

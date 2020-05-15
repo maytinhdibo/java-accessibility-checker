@@ -1,16 +1,11 @@
 
 package parser;
 
-import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.type.*;
 import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.resolution.declarations.ResolvedClassDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
-import com.github.javaparser.resolution.types.ResolvedArrayType;
-import com.github.javaparser.resolution.types.ResolvedReferenceType;
-import com.github.javaparser.resolution.types.ResolvedType;
-import com.github.javaparser.resolution.types.ResolvedVoidType;
+import com.github.javaparser.resolution.types.*;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
@@ -18,7 +13,9 @@ import com.github.javaparser.utils.Pair;
 import config.StringConstant;
 import data.*;
 
+import java.lang.reflect.WildcardType;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReflectionClassParser extends ClassParser {
     protected void parseGenericType(List<ResolvedTypeParameterDeclaration> genericTypes) {
@@ -156,11 +153,16 @@ public class ReflectionClassParser extends ClassParser {
             } catch (UnsupportedOperationException err) {
                 if (resolveGenericType(typeName) && type.asTypeParameter().getId().equals(classModel.getClassId() + "." + typeName)) {
                     isGenericType = true;
+                    parseFrom = classModel.getClassId();
                 } else {
-//                    if (resolveClass.getClassName().equals("C")) {}
+                    if (resolveClass.getClassName().equals("C") && type.describe().equals("K")) {
+                        System.out.println("a");
+                    }
                     ResolvedExtendedGenericType resolveId = resolveExtendGenericType(resolveClass, type);
                     if (resolveId != null) {
-                        if (resolveId.type == StringConstant.RESOLVED) typeId = resolveId.result;
+                        if (resolveId.type == StringConstant.RESOLVED) {
+                            return parseType(resolveId.resolvedResult);
+                        }
                         if (resolveId.type == StringConstant.GENERIC) {
                             typeName = resolveId.result;
                             isGenericType = true;
@@ -172,13 +174,23 @@ public class ReflectionClassParser extends ClassParser {
             DataType result = new DataType(typeId, typeName, isArray);
             if (parseFrom != null) result.setParseFrom(parseFrom);
             if (isGenericType) result.setGenericType(true);
-            if (type instanceof ClassOrInterfaceType) {
-                ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) type;
-                result.setName(classOrInterfaceType.getNameAsString());
-                if (classOrInterfaceType.getTypeArguments().isPresent()) {
-                    classOrInterfaceType.getTypeArguments().get().forEach(typeArg -> {
-                        if (typeArg instanceof Type) result.addTypeArg(parseType(typeArg, false));
+
+//            if (result.getName().equals("java.util.List<java.lang.String>")) {
+//                List<Pair<ResolvedTypeParameterDeclaration, ResolvedType>> c = type.asReferenceType().getTypeParametersMap();
+//                System.out.println("one");
+//            }
+
+            if (type.isReferenceType()) {
+                try {
+                    type.asReferenceType().getTypeParametersMap().forEach(param -> {
+                        if (!(param.b instanceof ResolvedWildcard)) {
+                            System.out.println("none");
+                            DataType paramType = parseType(param.b);
+                            result.addTypeArg(paramType);
+                        }
                     });
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
             return result;
@@ -186,48 +198,43 @@ public class ReflectionClassParser extends ClassParser {
     }
 
     private Optional<ResolvedType> finded = null;
-    private ResolvedClassDeclaration findedClass;
+    private ResolvedReferenceType findedClass;
 
     public ResolvedExtendedGenericType resolveExtendGenericType(ResolvedClassDeclaration resolvedClassDeclaration, ResolvedType type) {
         if (resolvedClassDeclaration == null) return null;
-        if (resolvedClassDeclaration.getSuperClass() != null) {
-            Optional<ResolvedType> result = resolvedClassDeclaration.getSuperClass().getGenericParameterByName(type.describe());
 
-            if (resolveClass.getClassName().equals("B") && type.describe().equals("K")) {
-                if (result.isPresent()) {
-                    Object b = result.get().describe();
-                    System.out.println("b");
-                }
-                System.out.println("a");
-            }
-
+        List<ResolvedReferenceType> listExtended = resolvedClassDeclaration.getAllSuperClasses();
+        for (ResolvedReferenceType klass : listExtended) {
+            Optional<ResolvedType> result = klass.getGenericParameterByName(type.describe());
             if (result.isPresent() && (result.get().isReference() || result.get().asTypeParameter().getId().equals(type.asTypeParameter().getId()))) {
                 if (result.get().isReferenceType()) {
-//                    if (resolveClass.getClassName().equals("C") && type.describe().equals("V")) {
-//                        System.out.println("a");
-//                    }
-                    Object re = result.get().describe();
-                    String resolve = result.get().asReferenceType().describe();
-                    return new ResolvedExtendedGenericType(StringConstant.RESOLVED, resolve, "");
+                    return new ResolvedExtendedGenericType(StringConstant.RESOLVED, result.get(), "");
                 } else {
                     finded = result;
-                    findedClass = resolvedClassDeclaration;
-                    return resolveExtendGenericType(resolvedClassDeclaration.getSuperClass().getTypeDeclaration().asClass(), type);
+                    findedClass = klass;
                 }
-            } else {
-                return resolveExtendGenericType(resolvedClassDeclaration.getSuperClass().getTypeDeclaration().asClass(), type);
             }
         }
+
         if (finded != null) {
             Optional<ResolvedType> result = finded;
-            //khác class trả về type gốc
-//            Object c = result.get().is;
+            //findedClass tìm thấy ở đâu, ví dụ: xét G thì K được tìm thấy tại B{<M>}
+            //result generic type tìm thấy
+
+            //Trong trường hợp tìm thấy generic type map với một class extend nhưng không phải là một referenceType
+            //Nếu GenericType tìm thấy nằm trong class -> Trả về kết quả resolve và class
+            //Nếu GenericType tìm thấy nằm ở class khác -> giữ nguyên type và trả về class gốc chứa nó.
+
             finded = null;
-            if (!findedClass.getId().equals(resolveClass.getId())) {
-                return new ResolvedExtendedGenericType(StringConstant.GENERIC, type.describe(), findedClass.getSuperClass().getId());
+
+            if (getPackageName(result.get().asTypeVariable().qualifiedName()).equals(classModel.getClassId())) {
+                //Resolve and case
+                return new ResolvedExtendedGenericType(StringConstant.GENERIC, result.get().describe(), classModel.getClassId());
             } else {
-                return new ResolvedExtendedGenericType(StringConstant.GENERIC, result.get().describe(), findedClass.getId());
+                //K and stock
+                return new ResolvedExtendedGenericType(StringConstant.GENERIC, type.describe(), findedClass.getId());
             }
+
         }
         return null;
     }
