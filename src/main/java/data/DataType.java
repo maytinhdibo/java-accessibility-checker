@@ -10,13 +10,13 @@ public class DataType {
     private boolean isVoid = false;
     private boolean isGenericType = false;
     private List<DataType> typeArgs = new ArrayList<>();
-    private String parseFrom;
+    private ParseFrom parseFrom;
 
-    public String getParseFrom() {
+    public ParseFrom getParseFrom() {
         return parseFrom;
     }
 
-    public void setParseFrom(String parseFrom) {
+    public void setParseFrom(ParseFrom parseFrom) {
         this.parseFrom = parseFrom;
     }
 

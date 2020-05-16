@@ -6,6 +6,8 @@ class Member{
     protected String name;
     protected StringConstant accessModifier;
     protected ClassModel parentClass;
+    private String originClass;
+
 
     public Member(String name, StringConstant accessModifier) {
         this.name = name;
@@ -34,6 +36,14 @@ class Member{
 
     public void setParentClass(ClassModel parentClass) {
         this.parentClass = parentClass;
+    }
+
+    public String getOriginClass() {
+        return originClass;
+    }
+
+    public void setOriginClass(String originClass) {
+        this.originClass = originClass;
     }
 
     @Override
