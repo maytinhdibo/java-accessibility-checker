@@ -12,7 +12,7 @@ public class ClassModel {
     private StringConstant accessModifier;
     private List<Member> members = new ArrayList<>();
     private List<String> genericTypes = new ArrayList<>();
-    private List<String> classExtendeds = new ArrayList<>();
+    private String classExtended;
 
     public ClassModel(String packageName, String classId, boolean isInterface, StringConstant accessModifier) {
         this.packageName = packageName;
@@ -21,12 +21,12 @@ public class ClassModel {
         this.accessModifier = accessModifier;
     }
 
-    public List<String> getClassExtendeds() {
-        return classExtendeds;
+    public String getClassExtended() {
+        return classExtended;
     }
 
-    public void addClassExtended(String classExtended) {
-        this.classExtendeds.add(classExtended);
+    public void setClassExtended(String classExtended) {
+        this.classExtended = classExtended;
     }
 
     public boolean isInterface() {

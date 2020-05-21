@@ -59,6 +59,9 @@ public class ReflectionClassParser extends ClassParser {
     }
 
     private void parseFields(List<ResolvedFieldDeclaration> fields) {
+        if(resolveClass.getClassName().equals("B")){
+            System.out.println("a");
+        }
         fields.forEach(field -> parseField(field));
     }
 
@@ -290,11 +293,16 @@ public class ReflectionClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(resolveClass.accessSpecifier().asString());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 
+        ResolvedType superClass = resolveClass.getSuperClass();
+        Object m = superClass.asReferenceType().getTypeParametersMap();
+
+        classModel.setClassExtended(superClass.describe());
+
         //parse generic type
         parseGenericType(resolveClass.getTypeParameters());
 
         parseMethods(resolveClass.getAllMethods());
-        parseFields(resolveClass.getAllFields());
+        parseFields(resolveClass.getVisibleFields());
         parseConstructors(resolveClass.getConstructors());
 
         projectParser.addClass(classModel);
