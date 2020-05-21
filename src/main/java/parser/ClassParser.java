@@ -88,7 +88,7 @@ public class ClassParser {
         return classPackageName;
     }
 
-    public static boolean checkVisibleMember(StringConstant accessModifier, String classId, String memberClassId, String extendedId) {
+    public static boolean checkVisibleMember(StringConstant accessModifier, String classId, String memberClassId, boolean isExtended) {
         String classPackageName = null;
         String memberPackageName = null;
 
@@ -105,7 +105,7 @@ public class ClassParser {
             if (classPackageName != memberPackageName) {
                 if (accessModifier == StringConstant.PRIVATE) return false;
             }
-        } else if (extendedId.equals(memberClassId)) {
+        } else if (isExtended) {
             //super class
             if (memberPackageName != classPackageName) {
                 if (getValueAccessModifier(accessModifier) < 2) return false;

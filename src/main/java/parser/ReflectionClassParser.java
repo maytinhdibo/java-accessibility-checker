@@ -31,16 +31,23 @@ public class ReflectionClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(field.accessSpecifier().asString());
 
         String memberClassId = field.declaringType().getPackageName() + "." + field.declaringType().getClassName();
-        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, resolveClass.getSuperClass().getId());
+
+//        boolean checkOveride =
+        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
         String name = field.getName();
+
         ResolvedType type = field.getType();
+
         DataType dataType = parseType(type);
         FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
         fieldMember.setParentClass(classModel);
         fieldMember.setOriginClass(field.declaringType().getId());
+        if(name.equals("e") && resolveClass.getClassName().equals("B")){
+            System.out.println("a");
+        }
         classModel.addMember(fieldMember);
     }
 
@@ -65,7 +72,7 @@ public class ReflectionClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(method.accessSpecifier().asString());
 
         String memberClassId = method.getPackageName() + "." + method.getClassName();
-        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, resolveClass.getSuperClass().getId());
+        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -255,8 +262,8 @@ public class ReflectionClassParser extends ClassParser {
 
         parseMethods(resolveClass.getAllMethods());
         parseFields(resolveClass.getAllFields());
+        Object d = resolveClass.getConstructors();
 
-        projectParser.addClass(classModel);
         return classModel;
     }
 
