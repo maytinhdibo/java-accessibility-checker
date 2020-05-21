@@ -3,10 +3,12 @@ package parser;
 
 import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.resolution.declarations.ResolvedClassDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
 import com.github.javaparser.resolution.types.*;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserConstructorDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
 import config.StringConstant;
@@ -22,6 +24,39 @@ public class ReflectionClassParser extends ClassParser {
     }
 
     protected JavaParserClassDeclaration resolveClass;
+
+    private void parseConstructors(List<ResolvedConstructorDeclaration> constructors) {
+        constructors.forEach(constructor -> parseConstructor(constructor));
+    }
+
+    public void parseConstructor(ResolvedConstructorDeclaration constructor) {
+        StringConstant accessModifier = getAccessModifier(constructor.accessSpecifier().asString());
+//
+//        String memberClassId = field.declaringType().getPackageName() + "." + field.declaringType().getClassName();
+//
+////        boolean checkOveride =
+//        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+//
+//        if (!visible) return;
+//
+        String name = constructor.getName();
+
+        ConstructorMember constructorMember = new ConstructorMember(name, accessModifier);
+
+        for (int i = 0; i < constructor.getNumberOfParams(); i++) {
+            ResolvedType type = constructor.getParam(i).getType();
+            try {
+                constructorMember.addParam(parseType(type));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        constructorMember.setParentClass(classModel);
+        constructorMember.setOriginClass(constructor.declaringType().getId());
+
+        classModel.addMember(constructorMember);
+    }
 
     private void parseFields(List<ResolvedFieldDeclaration> fields) {
         fields.forEach(field -> parseField(field));
@@ -45,9 +80,7 @@ public class ReflectionClassParser extends ClassParser {
         FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
         fieldMember.setParentClass(classModel);
         fieldMember.setOriginClass(field.declaringType().getId());
-        if(name.equals("e") && resolveClass.getClassName().equals("B")){
-            System.out.println("a");
-        }
+
         classModel.addMember(fieldMember);
     }
 
@@ -262,7 +295,9 @@ public class ReflectionClassParser extends ClassParser {
 
         parseMethods(resolveClass.getAllMethods());
         parseFields(resolveClass.getAllFields());
-        Object d = resolveClass.getConstructors();
+        parseConstructors(resolveClass.getConstructors());
+
+        projectParser.addClass(classModel);
 
         return classModel;
     }
