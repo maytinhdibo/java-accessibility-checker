@@ -31,7 +31,7 @@ public class ProjectParser {
 
     public static void main(String[] args) {
         ProjectParser projectParser = new ProjectParser();
-        projectParser.addSource(new File(Config.SOURCE_PATH));
+        projectParser.addSource(Config.SOURCE_PATH);
         projectParser.setProjectPath(Config.PROJECT_DIR);
         projectParser.parse();
     }
@@ -44,8 +44,8 @@ public class ProjectParser {
         classListModel.put(classModel.getClassId(), classModel);
     }
 
-    public void addSource(File source) {
-        combinedTypeSolver.add(new JavaParserTypeSolver(source));
+    public void addSource(String sourcePath) {
+        combinedTypeSolver.add(new JavaParserTypeSolver(new File(sourcePath)));
     }
 
     public void parse() {
