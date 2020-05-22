@@ -22,28 +22,38 @@ import java.util.List;
 
 public class ProjectParser {
     public HashMap<String, ClassModel> classListModel = new HashMap<>();
+    private CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+    private String projectDir;
+
+    public ProjectParser() {
+        combinedTypeSolver = new CombinedTypeSolver();
+    }
 
     public static void main(String[] args) {
         ProjectParser projectParser = new ProjectParser();
+        projectParser.addSource(new File(Config.SOURCE_PATH));
+        projectParser.setProjectPath(Config.PROJECT_DIR);
         projectParser.parse();
+    }
+
+    public void setProjectPath(String projectPath) {
+        projectDir = projectPath;
     }
 
     public void addClass(ClassModel classModel) {
         classListModel.put(classModel.getClassId(), classModel);
     }
 
+    public void addSource(File source) {
+        combinedTypeSolver.add(new JavaParserTypeSolver(source));
+    }
+
     public void parse() {
-        // Set up a minimal type solver that only looks at the classes used to run this sample.
-        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
-        //Add src path
-        combinedTypeSolver.add(new JavaParserTypeSolver(new File(Config.SOURCE_PATH)));
-        // Configure JavaParser to use type resolution
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedTypeSolver);
         StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
 
-
-        List<File> javaFiles = DirProcess.walkJavaFile(Config.PROJECT_DIR);
+        List<File> javaFiles = DirProcess.walkJavaFile(projectDir);
         List<FileData> dataFiles = new ArrayList<FileData>();
 
         for (File file : javaFiles) {

@@ -8,7 +8,6 @@ import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
 import com.github.javaparser.resolution.types.*;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserConstructorDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
 import config.StringConstant;
@@ -31,14 +30,7 @@ public class ReflectionClassParser extends ClassParser {
 
     public void parseConstructor(ResolvedConstructorDeclaration constructor) {
         StringConstant accessModifier = getAccessModifier(constructor.accessSpecifier().asString());
-//
-//        String memberClassId = field.declaringType().getPackageName() + "." + field.declaringType().getClassName();
-//
-////        boolean checkOveride =
-//        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
-//
-//        if (!visible) return;
-//
+
         String name = constructor.getName();
 
         ConstructorMember constructorMember = new ConstructorMember(name, accessModifier);
@@ -59,9 +51,6 @@ public class ReflectionClassParser extends ClassParser {
     }
 
     private void parseFields(List<ResolvedFieldDeclaration> fields) {
-        if(resolveClass.getClassName().equals("B")){
-            System.out.println("a");
-        }
         fields.forEach(field -> parseField(field));
     }
 
@@ -294,7 +283,6 @@ public class ReflectionClassParser extends ClassParser {
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 
         ResolvedType superClass = resolveClass.getSuperClass();
-        Object m = superClass.asReferenceType().getTypeParametersMap();
 
         classModel.setClassExtended(superClass.describe());
 
