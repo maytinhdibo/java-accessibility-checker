@@ -7,14 +7,12 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.*;
-import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import config.StringConstant;
 import data.*;
 import utils.Log;
 
 import java.util.Arrays;
-import java.util.HashMap;
 
 public class ProjectClassParser extends ClassParser {
 
@@ -114,13 +112,13 @@ public class ProjectClassParser extends ClassParser {
         try {
             Object resolveClass = klass.resolve();
             if (resolveClass instanceof JavaParserClassDeclaration)
-                return new ReflectionClassParser((JavaParserClassDeclaration) resolveClass, projectParser).parse();
+                return new SymbolSolverClassParser((JavaParserClassDeclaration) resolveClass, projectParser).parse();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();
-        Boolean isInterface = klass.isInterface();
+        boolean isInterface = klass.isInterface();
         StringConstant accessModifier = parseAccessModifier(klass.getModifiers());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 

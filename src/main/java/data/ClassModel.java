@@ -76,6 +76,11 @@ public class ClassModel {
     public void addMember(Member method) {
         this.members.add(method);
     }
+
+    @Override
+    public String toString() {
+        return classId;
+    }
 }
 
 

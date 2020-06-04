@@ -2,23 +2,17 @@
 package parser;
 
 import com.github.javaparser.resolution.MethodUsage;
-import com.github.javaparser.resolution.declarations.ResolvedClassDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
+import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.*;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
-import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
 import config.StringConstant;
 import data.*;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
-public class ReflectionClassParser extends ClassParser {
+public class SymbolSolverClassParser extends ClassParser {
 
     protected void parseGenericType(List<ResolvedTypeParameterDeclaration> genericTypes) {
         genericTypes.forEach(type -> {
@@ -169,6 +163,7 @@ public class ReflectionClassParser extends ClassParser {
 
     public DataType parseType(ResolvedType type, boolean isArray) {
         if (type instanceof ResolvedArrayType) return parseType(((ResolvedArrayType) type).getComponentType(), true);
+
         String typeName = type.describe();
 
         if (type.isPrimitive()) {
@@ -186,7 +181,6 @@ public class ReflectionClassParser extends ClassParser {
                 typeId = type.asReferenceType().getTypeDeclaration().getId();
 //                typeName = typeId;
             } catch (UnsupportedOperationException err) {
-//                err.printStackTrace();
                 if (type.asTypeParameter().declaredOnMethod() || type.asTypeParameter().declaredOnConstructor()) {
                     typeId = type.describe();
                     parseFrom = new ParseFrom(true);
@@ -194,7 +188,7 @@ public class ReflectionClassParser extends ClassParser {
                     isGenericType = true;
                     parseFrom = new ParseFrom(classModel.getClassId());
                 } else {
-                    ResolvedExtendedGenericType resolveId = resolveExtendGenericType(reflectionClass, type);
+                    ResolvedExtendedGenericType resolveId = resolveExtendGenericType(resolveClass, type);
                     if (resolveId != null) {
                         if (resolveId.type == StringConstant.RESOLVED) {
                             return parseType(resolveId.resolvedResult);
@@ -204,12 +198,7 @@ public class ReflectionClassParser extends ClassParser {
                             isGenericType = true;
                             parseFrom = new ParseFrom(resolveId.parseFrom);
                         }
-                    } else {
-//                        throw err;
-                        typeName = "Object";
-                        typeId = "java.lang.Object";
-                        parseFrom = null;
-                    }
+                    } else throw err;
                 }
             }
 
@@ -238,17 +227,12 @@ public class ReflectionClassParser extends ClassParser {
     private ResolvedType finded = null;
     private ResolvedReferenceType findedClass;
 
-    public ResolvedExtendedGenericType resolveExtendGenericType(ReflectionClassDeclaration resolvedClassDeclaration, ResolvedType type) {
+    public ResolvedExtendedGenericType resolveExtendGenericType(ResolvedClassDeclaration resolvedClassDeclaration, ResolvedType type) {
         if (resolvedClassDeclaration == null) return null;
 
         List<ResolvedReferenceType> listExtended = resolvedClassDeclaration.getAllSuperClasses();
         for (ResolvedReferenceType klass : listExtended) {
             Optional<ResolvedType> result = klass.getGenericParameterByName(type.describe());
-
-            if (curMethod.getName().equals("compareTo")) {
-                System.out.println("a");
-            }
-
             if (result.isPresent() && (result.get().isReference() || result.get().asTypeParameter().getId().equals(type.asTypeParameter().getId()))) {
                 if (result.get().isReferenceType()) {
                     return new ResolvedExtendedGenericType(StringConstant.RESOLVED, result.get(), "");
@@ -283,35 +267,29 @@ public class ReflectionClassParser extends ClassParser {
         return null;
     }
 
-    ReflectionClassDeclaration reflectionClass;
-
-    public ReflectionClassParser(ReflectionClassDeclaration reflectionClass, ProjectParser projectParser) {
-        this.reflectionClass = reflectionClass;
+    public SymbolSolverClassParser(JavaParserClassDeclaration resolveClass, ProjectParser projectParser) {
+        this.resolveClass = resolveClass;
         this.projectParser = projectParser;
     }
 
     public ClassModel parse() {
-        String classId = reflectionClass.getId();
-        if (projectParser.classListModel.get(classId) != null) {
-            return null;
-        }
-        packageName = reflectionClass.getPackageName();
+        packageName = resolveClass.getPackageName();
+        String classId = resolveClass.getId();
+        boolean isInterface = resolveClass.isInterface();
 
-        boolean isInterface = reflectionClass.isInterface();
-
-        StringConstant accessModifier = getAccessModifier(reflectionClass.accessSpecifier().asString());
+        StringConstant accessModifier = getAccessModifier(resolveClass.accessSpecifier().asString());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 
-        ResolvedType superClass = reflectionClass.getSuperClass();
+        ResolvedType superClass = resolveClass.getSuperClass();
 
         classModel.setClassExtended(superClass.describe());
 
         //parse generic type
-        parseGenericType(reflectionClass.getTypeParameters());
+        parseGenericType(resolveClass.getTypeParameters());
 
-        parseMethods(reflectionClass.getAllMethods());
-//        parseFields(resolveClass.getVisibleFields());
-//        parseConstructors(resolveClass.getConstructors());
+        parseMethods(resolveClass.getAllMethods());
+        parseFields(resolveClass.getVisibleFields());
+        parseConstructors(resolveClass.getConstructors());
 
         projectParser.addClass(classModel);
 
