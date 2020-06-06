@@ -15,17 +15,21 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import config.Config;
+import config.StringConstant;
 import data.ClassModel;
 import data.FileData;
+import data.Member;
 import utils.DirProcess;
 import utils.FileProcess;
 import utils.Log;
+import utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class ProjectParser {
@@ -74,9 +78,6 @@ public class ProjectParser {
         List<FileData> dataFiles = new ArrayList<FileData>();
 
 
-        Object d = jarTypeSolver.solveType("org.json.CDL").asClass().getAllMethods();
-
-
         for (File file : javaFiles) {
             String data = FileProcess.read(file);
             Log.write("File: " + file.getAbsolutePath());
@@ -90,26 +91,62 @@ public class ProjectParser {
                 classParser.parse();
             });
 
-
-            compilationUnit.findAll(Expression.class).forEach(be -> {
-                try {
-                    if (be == null) return;
-                    if (!(be instanceof MarkerAnnotationExpr)) {
-                        ResolvedType resolvedType = be.calculateResolvedType();
-                        if (resolvedType.isReferenceType()) {
-                            ResolvedReferenceTypeDeclaration id = resolvedType.asReferenceType().getTypeDeclaration();
-                            if (id instanceof ReflectionClassDeclaration) {
-                                ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration)id, this);
-                                classParser.parse();
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.warning("NOT SUPPORT BINDING: " + be.toString());
-                }
-            });
-
+//            compilationUnit.findAll(Expression.class).forEach(be -> {
+//                try {
+//                    if (be == null) return;
+//                    if (!(be instanceof MarkerAnnotationExpr)) {
+//                        ResolvedType resolvedType = be.calculateResolvedType();
+//                        if (resolvedType.isReferenceType()) {
+//                            ResolvedReferenceTypeDeclaration id = resolvedType.asReferenceType().getTypeDeclaration();
+//                            if (id instanceof ReflectionClassDeclaration) {
+//                                ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration)id, this);
+//                                classParser.parse();
+//                            }
+//                        }
+//                    }
+//                } catch (Exception e) {
+//                    Log.warning("NOT SUPPORT BINDING: " + be.toString());
+//                }
+//            });
         }
     }
 
+
+    public boolean isExtended(String classId, String parentId) {
+        if (parentId.equals("java.lang.Object")) return true;
+
+        if (classId.equals("java.lang.Object")) return false;
+
+        if (classListModel.get(classId) == null) return false;
+
+        String extendedClass = Utils.normalizeId(classListModel.get(classId).getClassExtended());
+
+        if (extendedClass.equals(parentId)) {
+            return true;
+        } else {
+            return isExtended(extendedClass, parentId);
+        }
+    }
+
+    public HashMap<String, ClassModel> canAccess(String fromClass) {
+        HashMap<String, ClassModel> canAccessList = new HashMap<>();
+
+        for (Map.Entry<String, ClassModel> entry : classListModel.entrySet()) {
+            String key = entry.getKey();
+            ClassModel klass = entry.getValue();
+            ClassModel klazz = klass.clone();
+            boolean extended = isExtended(fromClass, klass.getClassId());
+            if (Utils.checkVisibleMember(klazz.getAccessModifier(), fromClass, klazz.getClassId(), extended)) {
+                canAccessList.put(key, klazz);
+                List<Member> toRemoves = new ArrayList<>();
+                klazz.getMembers().forEach(member -> {
+                    if(!Utils.checkVisibleMember(member.getAccessModifier(), fromClass, klazz.getClassId(), extended)){
+                        toRemoves.add(member);
+                    }
+                });
+                klazz.getMembers().removeAll(toRemoves);
+            }
+        }
+        return canAccessList;
+    }
 }

@@ -5,7 +5,7 @@ import config.StringConstant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClassModel {
+public class ClassModel implements Cloneable {
     private String packageName;
     private String classId;
     private boolean isInterface;
@@ -80,6 +80,17 @@ public class ClassModel {
     @Override
     public String toString() {
         return classId;
+    }
+
+    public ClassModel clone() {
+        ClassModel classCloned = new ClassModel(packageName, classId, isInterface, accessModifier);
+        members.forEach(member -> {
+            classCloned.addMember(member);
+        });
+        genericTypes.forEach(genericType -> {
+            classCloned.addGenericType(genericType);
+        });
+        return classCloned;
     }
 }
 

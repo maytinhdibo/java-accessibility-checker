@@ -2,7 +2,7 @@ package data;
 
 import config.StringConstant;
 
-class Member{
+public class Member implements Cloneable{
     protected String name;
     protected StringConstant accessModifier;
     protected ClassModel parentClass;

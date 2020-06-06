@@ -9,6 +9,7 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
 import config.StringConstant;
 import data.*;
+import utils.Utils;
 
 import java.util.*;
 
@@ -58,7 +59,7 @@ public class SymbolSolverClassParser extends ClassParser {
         String memberClassId = field.declaringType().getPackageName() + "." + field.declaringType().getClassName();
 
 //        boolean checkOveride =
-        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+        boolean visible = Utils.checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -95,7 +96,7 @@ public class SymbolSolverClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(method.accessSpecifier().asString());
 
         String memberClassId = method.getPackageName() + "." + method.getClassName();
-        boolean visible = checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+        boolean visible = Utils.checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -132,7 +133,7 @@ public class SymbolSolverClassParser extends ClassParser {
         String name = method.getName();
         StringConstant accessModifier = getAccessModifier(method.accessSpecifier().asString());
 
-        if (getValueAccessModifier(accessModifier) < 3) {
+        if (Utils.getValueAccessModifier(accessModifier) < 3) {
             return;
         }
 
@@ -255,7 +256,7 @@ public class SymbolSolverClassParser extends ClassParser {
 
             finded = null;
 
-            if (getPackageName(result.asTypeVariable().qualifiedName()).equals(classModel.getClassId())) {
+            if (Utils.getPackageName(result.asTypeVariable().qualifiedName()).equals(classModel.getClassId())) {
                 //Resolve and case
                 return new ResolvedExtendedGenericType(StringConstant.GENERIC, result.describe(), classModel.getClassId());
             } else {
