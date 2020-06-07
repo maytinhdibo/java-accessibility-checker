@@ -13,6 +13,7 @@ public class ClassModel implements Cloneable {
     private List<Member> members = new ArrayList<>();
     private List<String> genericTypes = new ArrayList<>();
     private String classExtended;
+    private List<String> interfaces = new ArrayList<>();
 
     public ClassModel(String packageName, String classId, boolean isInterface, StringConstant accessModifier) {
         this.packageName = packageName;
@@ -75,6 +76,14 @@ public class ClassModel implements Cloneable {
 
     public void addMember(Member method) {
         this.members.add(method);
+    }
+
+    public List<String> getInterfaces() {
+        return interfaces;
+    }
+
+    public void addInterface(String interfaceId) {
+        interfaces.add(interfaceId);
     }
 
     @Override

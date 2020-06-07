@@ -281,6 +281,12 @@ public class SymbolSolverClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(resolveClass.accessSpecifier().asString());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 
+        if(resolveClass.getInterfaces().size()>0){
+            resolveClass.getInterfaces().forEach(type->{
+                classModel.addInterface(type.getId());
+            });
+        }
+
         ResolvedType superClass = resolveClass.getSuperClass();
 
         classModel.setClassExtended(superClass.describe());

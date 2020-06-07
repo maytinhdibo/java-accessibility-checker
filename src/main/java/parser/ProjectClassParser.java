@@ -119,8 +119,19 @@ public class ProjectClassParser extends ClassParser {
 
         String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();
         boolean isInterface = klass.isInterface();
+
         StringConstant accessModifier = parseAccessModifier(klass.getModifiers());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
+
+        if (klass.getImplementedTypes().size() > 0) {
+            klass.getImplementedTypes().forEach(type -> {
+                try {
+                    classModel.addInterface(type.resolve().getId());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
 
         //parse generic type
         parseGenericType(klass.getTypeParameters());
