@@ -9,6 +9,8 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
@@ -45,6 +47,11 @@ public class ProjectParser {
         ProjectParser projectParser = new ProjectParser();
         projectParser.addSource(Config.SOURCE_PATH);
         projectParser.setProjectPath(Config.PROJECT_DIR);
+        try {
+            projectParser.addJarFile("/Users/maytinhdibo/Downloads/org.json-chargebee-1.0.jar");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("Starting parser...");
         projectParser.parse();
         System.out.println("Parse done!");
@@ -54,12 +61,16 @@ public class ProjectParser {
         projectDir = projectPath;
     }
 
-    public void addClass(ClassModel classModel) {
-        classListModel.put(classModel.getClassId(), classModel);
-    }
-
     public void addSource(String sourcePath) {
         combinedTypeSolver.add(new JavaParserTypeSolver(new File(sourcePath)));
+    }
+
+    public void addJarFile(String jarPath) throws IOException {
+        combinedTypeSolver.add(new JarTypeSolver(new File(jarPath)));
+    }
+
+    public void addClass(ClassModel classModel) {
+        classListModel.put(classModel.getClassId(), classModel);
     }
 
     public void parse() {
@@ -102,6 +113,9 @@ public class ProjectParser {
                             ResolvedReferenceTypeDeclaration id = resolvedType.asReferenceType().getTypeDeclaration();
                             if (id instanceof ReflectionClassDeclaration) {
                                 ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration) id, this);
+                                classParser.parse();
+                            } else if (id instanceof JavassistClassDeclaration) {
+                                JavassistClassParser classParser = new JavassistClassParser((JavassistClassDeclaration) id, this);
                                 classParser.parse();
                             }
                         }
