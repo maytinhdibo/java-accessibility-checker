@@ -46,6 +46,7 @@ public class ProjectParser {
         projectParser.addSource(Config.SOURCE_PATH);
         projectParser.setProjectPath(Config.PROJECT_DIR);
         projectParser.parse();
+        System.out.println("b");
     }
 
     public void setProjectPath(String projectPath) {
@@ -91,23 +92,23 @@ public class ProjectParser {
                 classParser.parse();
             });
 
-//            compilationUnit.findAll(Expression.class).forEach(be -> {
-//                try {
-//                    if (be == null) return;
-//                    if (!(be instanceof MarkerAnnotationExpr)) {
-//                        ResolvedType resolvedType = be.calculateResolvedType();
-//                        if (resolvedType.isReferenceType()) {
-//                            ResolvedReferenceTypeDeclaration id = resolvedType.asReferenceType().getTypeDeclaration();
-//                            if (id instanceof ReflectionClassDeclaration) {
-//                                ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration)id, this);
-//                                classParser.parse();
-//                            }
-//                        }
-//                    }
-//                } catch (Exception e) {
-//                    Log.warning("NOT SUPPORT BINDING: " + be.toString());
-//                }
-//            });
+            compilationUnit.findAll(Expression.class).forEach(be -> {
+                try {
+                    if (be == null) return;
+                    if (!(be instanceof MarkerAnnotationExpr)) {
+                        ResolvedType resolvedType = be.calculateResolvedType();
+                        if (resolvedType.isReferenceType()) {
+                            ResolvedReferenceTypeDeclaration id = resolvedType.asReferenceType().getTypeDeclaration();
+                            if (id instanceof ReflectionClassDeclaration) {
+                                ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration) id, this);
+                                classParser.parse();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.warning("NOT SUPPORT BINDING: " + be.toString());
+                }
+            });
         }
     }
 
@@ -135,12 +136,16 @@ public class ProjectParser {
             String key = entry.getKey();
             ClassModel klass = entry.getValue();
             ClassModel klazz = klass.clone();
+            if (klass.getClassId().equals(fromClass)) {
+                canAccessList.put(key, klazz);
+                continue;
+            }
             boolean extended = isExtended(fromClass, klass.getClassId());
             if (Utils.checkVisibleMember(klazz.getAccessModifier(), fromClass, klazz.getClassId(), extended)) {
                 canAccessList.put(key, klazz);
                 List<Member> toRemoves = new ArrayList<>();
                 klazz.getMembers().forEach(member -> {
-                    if(!Utils.checkVisibleMember(member.getAccessModifier(), fromClass, klazz.getClassId(), extended)){
+                    if (!Utils.checkVisibleMember(member.getAccessModifier(), fromClass, klazz.getClassId(), extended)) {
                         toRemoves.add(member);
                     }
                 });
