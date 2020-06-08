@@ -21,14 +21,6 @@ import java.util.Set;
 
 public class ReflectionClassParser extends ClassParser {
 
-    protected void parseGenericType(List<ResolvedTypeParameterDeclaration> genericTypes) {
-        genericTypes.forEach(type -> {
-            classModel.addGenericType(type.getName());
-        });
-    }
-
-    protected JavaParserClassDeclaration resolveClass;
-
     private void parseConstructors(List<ResolvedConstructorDeclaration> constructors) {
         constructors.forEach(constructor -> parseConstructor(constructor));
     }
@@ -64,8 +56,7 @@ public class ReflectionClassParser extends ClassParser {
 
         String memberClassId = field.declaringType().getPackageName() + "." + field.declaringType().getClassName();
 
-//        boolean checkOveride =
-        boolean visible = Utils.checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+        boolean visible = Utils.checkVisibleMember(accessModifier, reflectionClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -73,7 +64,9 @@ public class ReflectionClassParser extends ClassParser {
 
         ResolvedType type = field.getType();
 
-        DataType dataType = parseType(type);
+        DataType dataType = null;
+
+        dataType = parseType(type);
         FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
         fieldMember.setParentClass(classModel);
         fieldMember.setOriginClass(field.declaringType().getId());
@@ -102,7 +95,7 @@ public class ReflectionClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(method.accessSpecifier().asString());
 
         String memberClassId = method.getPackageName() + "." + method.getClassName();
-        boolean visible = Utils.checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+        boolean visible = Utils.checkVisibleMember(accessModifier, reflectionClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -246,10 +239,6 @@ public class ReflectionClassParser extends ClassParser {
         for (ResolvedReferenceType klass : listExtended) {
             Optional<ResolvedType> result = klass.getGenericParameterByName(type.describe());
 
-            if (curMethod.getName().equals("compareTo")) {
-                System.out.println("a");
-            }
-
             if (result.isPresent() && (result.get().isReference() || result.get().asTypeParameter().getId().equals(type.asTypeParameter().getId()))) {
                 if (result.get().isReferenceType()) {
                     return new ResolvedExtendedGenericType(StringConstant.RESOLVED, result.get(), "");
@@ -305,14 +294,15 @@ public class ReflectionClassParser extends ClassParser {
 
         ResolvedType superClass = reflectionClass.getSuperClass();
 
-        classModel.setClassExtended(superClass.describe());
-
+        if (superClass != null) {
+            classModel.setClassExtended(superClass.describe());
+        }
         //parse generic type
         parseGenericType(reflectionClass.getTypeParameters());
 
         parseMethods(reflectionClass.getAllMethods());
-//        parseFields(resolveClass.getVisibleFields());
-//        parseConstructors(resolveClass.getConstructors());
+        parseFields(reflectionClass.getVisibleFields());
+        parseConstructors(reflectionClass.getConstructors());
 
         projectParser.addClass(classModel);
 

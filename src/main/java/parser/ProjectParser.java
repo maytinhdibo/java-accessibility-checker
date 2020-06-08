@@ -45,8 +45,9 @@ public class ProjectParser {
         ProjectParser projectParser = new ProjectParser();
         projectParser.addSource(Config.SOURCE_PATH);
         projectParser.setProjectPath(Config.PROJECT_DIR);
+        System.out.println("Starting parser...");
         projectParser.parse();
-        System.out.println("b");
+        System.out.println("Parse done!");
     }
 
     public void setProjectPath(String projectPath) {
@@ -84,7 +85,7 @@ public class ProjectParser {
             Log.write("File: " + file.getAbsolutePath());
             dataFiles.add(new FileData(file.getPath(), data));
             CompilationUnit compilationUnit = StaticJavaParser.parse(data);
-            SymbolSolver.resolvedType(compilationUnit);
+//            SymbolSolver.resolvedType(compilationUnit);
 
             String packageName = compilationUnit.getPackageDeclaration().get().getName().toString();
             compilationUnit.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
@@ -105,8 +106,10 @@ public class ProjectParser {
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (UnsupportedOperationException e) {
                     Log.warning("NOT SUPPORT BINDING: " + be.toString());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             });
         }

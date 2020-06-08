@@ -15,12 +15,6 @@ import java.util.*;
 
 public class SymbolSolverClassParser extends ClassParser {
 
-    protected void parseGenericType(List<ResolvedTypeParameterDeclaration> genericTypes) {
-        genericTypes.forEach(type -> {
-            classModel.addGenericType(type.getName());
-        });
-    }
-
     protected JavaParserClassDeclaration resolveClass;
 
     private void parseConstructors(List<ResolvedConstructorDeclaration> constructors) {
@@ -281,8 +275,8 @@ public class SymbolSolverClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(resolveClass.accessSpecifier().asString());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 
-        if(resolveClass.getInterfaces().size()>0){
-            resolveClass.getInterfaces().forEach(type->{
+        if (resolveClass.getInterfaces().size() > 0) {
+            resolveClass.getInterfaces().forEach(type -> {
                 classModel.addInterface(type.getId());
             });
         }

@@ -4,6 +4,7 @@ import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.VoidType;
+import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import config.StringConstant;
 import data.ClassModel;
@@ -11,6 +12,7 @@ import data.DataType;
 import data.MethodMember;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class ClassParser {
     protected ClassModel classModel = null;
@@ -22,6 +24,12 @@ public class ClassParser {
         if (classModel.getGenericTypes().contains(name)) return true;
         if (curMethod != null && curMethod.getGenericTypes().contains(name)) return true;
         return false;
+    }
+
+    protected void parseGenericType(List<ResolvedTypeParameterDeclaration> genericTypes) {
+        genericTypes.forEach(type -> {
+            classModel.addGenericType(type.getName());
+        });
     }
 
     //parse generic type

@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.*;
+import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import config.StringConstant;
 import data.*;
@@ -136,10 +137,10 @@ public class ProjectClassParser extends ClassParser {
         //parse generic type
         parseGenericType(klass.getTypeParameters());
 
-        System.out.println(classModel.getClassId());
         projectParser.addClass(classModel);
 
         parseMember(klass);
         return classModel;
     }
+
 }
