@@ -10,6 +10,7 @@ import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
+import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
@@ -71,6 +72,22 @@ public class ProjectParser {
 
     public void addClass(ClassModel classModel) {
         classListModel.put(classModel.getClassId(), classModel);
+    }
+
+    public void parseClass(String classId){
+//        Object d = combinedTypeSolver.solveType(classId);
+        classId = Utils.normalizeId(classId);
+        parseClass((AbstractClassDeclaration) combinedTypeSolver.solveType(classId));
+    }
+
+    public void parseClass(AbstractClassDeclaration declaration){
+        if (declaration instanceof ReflectionClassDeclaration) {
+            ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration) declaration, this);
+            classParser.parse();
+        } else if (declaration instanceof JavassistClassDeclaration) {
+            JavassistClassParser classParser = new JavassistClassParser((JavassistClassDeclaration) declaration, this);
+            classParser.parse();
+        }
     }
 
     public void parse() {

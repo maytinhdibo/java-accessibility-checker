@@ -295,6 +295,7 @@ public class ReflectionClassParser extends ClassParser {
         ResolvedType superClass = reflectionClass.getSuperClass();
 
         if (superClass != null) {
+            projectParser.parseClass(superClass.describe());
             classModel.setClassExtended(superClass.describe());
         }
         //parse generic type

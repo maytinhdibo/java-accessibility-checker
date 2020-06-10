@@ -283,7 +283,10 @@ public class SymbolSolverClassParser extends ClassParser {
 
         ResolvedType superClass = resolveClass.getSuperClass();
 
-        classModel.setClassExtended(superClass.describe());
+        if (superClass != null) {
+            projectParser.parseClass(superClass.describe());
+            classModel.setClassExtended(superClass.describe());
+        }
 
         //parse generic type
         parseGenericType(resolveClass.getTypeParameters());
