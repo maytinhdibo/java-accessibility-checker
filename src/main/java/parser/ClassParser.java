@@ -5,13 +5,11 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.VoidType;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import config.StringConstant;
 import data.ClassModel;
 import data.DataType;
 import data.MethodMember;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class ClassParser {

@@ -1,21 +1,21 @@
-
 package parser;
 
 import com.github.javaparser.resolution.MethodUsage;
-import com.github.javaparser.resolution.declarations.*;
+import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.types.*;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
+import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
 import config.StringConstant;
 import data.*;
 import utils.Utils;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class SymbolSolverClassParser extends ClassParser {
-
-    protected JavaParserClassDeclaration resolveClass;
 
     private void parseConstructors(List<ResolvedConstructorDeclaration> constructors) {
         constructors.forEach(constructor -> parseConstructor(constructor));
@@ -52,8 +52,7 @@ public class SymbolSolverClassParser extends ClassParser {
 
         String memberClassId = field.declaringType().getPackageName() + "." + field.declaringType().getClassName();
 
-//        boolean checkOveride =
-        boolean visible = Utils.checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+        boolean visible = Utils.checkVisibleMember(accessModifier, reflectionClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -90,7 +89,7 @@ public class SymbolSolverClassParser extends ClassParser {
         StringConstant accessModifier = getAccessModifier(method.accessSpecifier().asString());
 
         String memberClassId = method.getPackageName() + "." + method.getClassName();
-        boolean visible = Utils.checkVisibleMember(accessModifier, resolveClass.getId(), memberClassId, true);
+        boolean visible = Utils.checkVisibleMember(accessModifier, reflectionClass.getId(), memberClassId, true);
 
         if (!visible) return;
 
@@ -158,7 +157,6 @@ public class SymbolSolverClassParser extends ClassParser {
 
     public DataType parseType(ResolvedType type, boolean isArray) {
         if (type instanceof ResolvedArrayType) return parseType(((ResolvedArrayType) type).getComponentType(), true);
-
         String typeName = type.describe();
 
         if (type.isPrimitive()) {
@@ -176,6 +174,7 @@ public class SymbolSolverClassParser extends ClassParser {
                 typeId = type.asReferenceType().getTypeDeclaration().getId();
 //                typeName = typeId;
             } catch (UnsupportedOperationException err) {
+//                err.printStackTrace();
                 if (type.asTypeParameter().declaredOnMethod() || type.asTypeParameter().declaredOnConstructor()) {
                     typeId = type.describe();
                     parseFrom = new ParseFrom(true);
@@ -183,7 +182,7 @@ public class SymbolSolverClassParser extends ClassParser {
                     isGenericType = true;
                     parseFrom = new ParseFrom(classModel.getClassId());
                 } else {
-                    ResolvedExtendedGenericType resolveId = resolveExtendGenericType(resolveClass, type);
+                    ResolvedExtendedGenericType resolveId = resolveExtendGenericType(reflectionClass, type);
                     if (resolveId != null) {
                         if (resolveId.type == StringConstant.RESOLVED) {
                             return parseType(resolveId.resolvedResult);
@@ -193,7 +192,11 @@ public class SymbolSolverClassParser extends ClassParser {
                             isGenericType = true;
                             parseFrom = new ParseFrom(resolveId.parseFrom);
                         }
-                    } else throw err;
+                    } else {
+                        typeName = "Object";
+                        typeId = "java.lang.Object";
+                        parseFrom = null;
+                    }
                 }
             }
 
@@ -222,12 +225,13 @@ public class SymbolSolverClassParser extends ClassParser {
     private ResolvedType finded = null;
     private ResolvedReferenceType findedClass;
 
-    public ResolvedExtendedGenericType resolveExtendGenericType(ResolvedClassDeclaration resolvedClassDeclaration, ResolvedType type) {
+    public ResolvedExtendedGenericType resolveExtendGenericType(AbstractClassDeclaration resolvedClassDeclaration, ResolvedType type) {
         if (resolvedClassDeclaration == null) return null;
 
         List<ResolvedReferenceType> listExtended = resolvedClassDeclaration.getAllSuperClasses();
         for (ResolvedReferenceType klass : listExtended) {
             Optional<ResolvedType> result = klass.getGenericParameterByName(type.describe());
+
             if (result.isPresent() && (result.get().isReference() || result.get().asTypeParameter().getId().equals(type.asTypeParameter().getId()))) {
                 if (result.get().isReferenceType()) {
                     return new ResolvedExtendedGenericType(StringConstant.RESOLVED, result.get(), "");
@@ -262,38 +266,43 @@ public class SymbolSolverClassParser extends ClassParser {
         return null;
     }
 
-    public SymbolSolverClassParser(JavaParserClassDeclaration resolveClass, ProjectParser projectParser) {
-        this.resolveClass = resolveClass;
+    AbstractClassDeclaration reflectionClass;
+
+    public SymbolSolverClassParser(AbstractClassDeclaration reflectionClass, ProjectParser projectParser) {
+        this.reflectionClass = reflectionClass;
         this.projectParser = projectParser;
     }
 
     public ClassModel parse() {
-        packageName = resolveClass.getPackageName();
-        String classId = resolveClass.getId();
-        boolean isInterface = resolveClass.isInterface();
+        String classId = reflectionClass.getId();
+        if (projectParser.classListModel.get(classId) != null) {
+            return null;
+        }
+        packageName = reflectionClass.getPackageName();
 
-        StringConstant accessModifier = getAccessModifier(resolveClass.accessSpecifier().asString());
+        boolean isInterface = reflectionClass.isInterface();
+
+        StringConstant accessModifier = getAccessModifier(reflectionClass.accessSpecifier().asString());
         classModel = new ClassModel(packageName, classId, isInterface, accessModifier);
 
-        if (resolveClass.getInterfaces().size() > 0) {
-            resolveClass.getInterfaces().forEach(type -> {
+        if (reflectionClass.getInterfaces().size() > 0) {
+            reflectionClass.getInterfaces().forEach(type -> {
                 classModel.addInterface(type.getId());
             });
         }
 
-        ResolvedType superClass = resolveClass.getSuperClass();
+        ResolvedType superClass = reflectionClass.getSuperClass();
 
         if (superClass != null) {
             projectParser.parseClass(superClass.describe());
             classModel.setClassExtended(superClass.describe());
         }
-
         //parse generic type
-        parseGenericType(resolveClass.getTypeParameters());
+        parseGenericType(reflectionClass.getTypeParameters());
 
-        parseMethods(resolveClass.getAllMethods());
-        parseFields(resolveClass.getVisibleFields());
-        parseConstructors(resolveClass.getConstructors());
+        parseMethods(reflectionClass.getAllMethods());
+        parseFields(reflectionClass.getVisibleFields());
+        parseConstructors(reflectionClass.getConstructors());
 
         projectParser.addClass(classModel);
 

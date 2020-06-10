@@ -8,17 +8,14 @@ import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
 import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import config.Config;
-import config.StringConstant;
 import data.ClassModel;
 import data.FileData;
 import data.Member;
@@ -74,20 +71,15 @@ public class ProjectParser {
         classListModel.put(classModel.getClassId(), classModel);
     }
 
-    public void parseClass(String classId){
+    public void parseClass(String classId) {
 //        Object d = combinedTypeSolver.solveType(classId);
         classId = Utils.normalizeId(classId);
         parseClass((AbstractClassDeclaration) combinedTypeSolver.solveType(classId));
     }
 
-    public void parseClass(AbstractClassDeclaration declaration){
-        if (declaration instanceof ReflectionClassDeclaration) {
-            ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration) declaration, this);
-            classParser.parse();
-        } else if (declaration instanceof JavassistClassDeclaration) {
-            JavassistClassParser classParser = new JavassistClassParser((JavassistClassDeclaration) declaration, this);
-            classParser.parse();
-        }
+    public void parseClass(AbstractClassDeclaration declaration) {
+        SymbolSolverClassParser classParser = new SymbolSolverClassParser(declaration, this);
+        classParser.parse();
     }
 
     public void parse() {
@@ -127,13 +119,9 @@ public class ProjectParser {
                     if (!(be instanceof MarkerAnnotationExpr)) {
                         ResolvedType resolvedType = be.calculateResolvedType();
                         if (resolvedType.isReferenceType()) {
-                            ResolvedReferenceTypeDeclaration id = resolvedType.asReferenceType().getTypeDeclaration();
-                            if (id instanceof ReflectionClassDeclaration) {
-                                ReflectionClassParser classParser = new ReflectionClassParser((ReflectionClassDeclaration) id, this);
-                                classParser.parse();
-                            } else if (id instanceof JavassistClassDeclaration) {
-                                JavassistClassParser classParser = new JavassistClassParser((JavassistClassDeclaration) id, this);
-                                classParser.parse();
+                            ResolvedReferenceTypeDeclaration declaration = resolvedType.asReferenceType().getTypeDeclaration();
+                            if (declaration instanceof ReflectionClassDeclaration || declaration instanceof JavassistClassDeclaration) {
+                                parseClass((AbstractClassDeclaration) declaration);
                             }
                         }
                     }
@@ -149,7 +137,6 @@ public class ProjectParser {
 
     public boolean isExtended(String classId, String parentId) {
         if (parentId.equals("java.lang.Object")) return true;
-
         if (classId.equals("java.lang.Object")) return false;
 
         if (classListModel.get(classId) == null) return false;
