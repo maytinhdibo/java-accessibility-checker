@@ -62,6 +62,8 @@ public class SymbolSolverClassParser extends ClassParser {
 
         DataType dataType = parseType(type);
         FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
+        fieldMember.setStatic(field.isStatic());
+
         fieldMember.setParentClass(classModel);
         fieldMember.setOriginClass(field.declaringType().getId());
 
@@ -94,6 +96,8 @@ public class SymbolSolverClassParser extends ClassParser {
         if (!visible) return;
 
         MethodMember methodMember = new MethodMember(name, null, accessModifier);
+
+        methodMember.setStatic(method.isStatic());
 
         method.getTypeParameters().forEach(genericType -> {
             methodMember.addGenericType(genericType.getName());

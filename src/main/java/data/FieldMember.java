@@ -4,10 +4,19 @@ import config.StringConstant;
 
 public class FieldMember extends Member {
     protected DataType type;
+    protected boolean isStatic = false;
 
     public FieldMember(String name, DataType type, StringConstant accessLevel) {
         super(name, accessLevel);
         this.type = type;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
+    }
+
+    public void setStatic(boolean aStatic) {
+        isStatic = aStatic;
     }
 
     public DataType getType() {
