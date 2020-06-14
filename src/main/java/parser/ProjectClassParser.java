@@ -45,7 +45,13 @@ public class ProjectClassParser extends ClassParser {
         field.getVariables().forEach(variable -> {
             String name = variable.getName().toString();
             Type type = variable.getType();
-            DataType dataType = parseType(type);
+            DataType dataType;
+            try {
+                dataType = parseType(type);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
             FieldMember fieldMember = new FieldMember(name, dataType, accessModifier);
             fieldMember.setParentClass(classModel);
             classModel.addMember(fieldMember);
@@ -58,8 +64,12 @@ public class ProjectClassParser extends ClassParser {
         String name = constructor.getNameAsString();
         ConstructorMember constructorMember = new ConstructorMember(name, accessModifier);
         constructor.getParameters().forEach(parameter -> {
-            DataType paramType = parseType(parameter.getType());
-            constructorMember.addParam(paramType);
+            try{
+                DataType paramType = parseType(parameter.getType());
+                constructorMember.addParam(paramType);
+            }catch (Exception e){
+                return;
+            }
         });
         constructorMember.setParentClass(classModel);
         classModel.addMember(constructorMember);
@@ -76,11 +86,22 @@ public class ProjectClassParser extends ClassParser {
         });
 
         curMethod = methodMember;
-        DataType dataType = parseType(type);
+        DataType dataType;
+        try {
+            dataType = parseType(type);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
         methodMember.setType(dataType);
         method.getParameters().forEach(parameter -> {
-            DataType paramType = parseType(parameter.getType());
-            methodMember.addParam(paramType);
+            try {
+                DataType paramType = parseType(parameter.getType());
+
+                methodMember.addParam(paramType);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
         curMethod = null;
         methodMember.setParentClass(classModel);
@@ -115,6 +136,7 @@ public class ProjectClassParser extends ClassParser {
                 return new SymbolSolverClassParser((JavaParserClassDeclaration) resolveClass, projectParser).parse();
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
 
         String classId = packageName.length() > 0 ? String.join(".", Arrays.asList(packageName, klass.getNameAsString())) : klass.getNameAsString();

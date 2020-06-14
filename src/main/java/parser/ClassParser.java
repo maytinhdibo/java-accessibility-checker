@@ -4,6 +4,7 @@ import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.VoidType;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
 import config.StringConstant;
 import data.ClassModel;
@@ -34,11 +35,11 @@ public class ClassParser {
     protected void parseGenericType() {
     }
 
-    public DataType parseType(Type type) {
+    public DataType parseType(Type type) throws UnsupportedOperationException {
         return parseType(type, false);
     }
 
-    public DataType parseType(Type type, boolean isArray) {
+    public DataType parseType(Type type, boolean isArray) throws UnsupportedOperationException{
         if (type instanceof ArrayType) return parseType(((ArrayType) type).getComponentType(), true);
 
         if (type.isPrimitiveType()) {
@@ -53,10 +54,12 @@ public class ClassParser {
 
             boolean isGenericType = false;
             try {
-                typeId = type.resolve().asReferenceType().getTypeDeclaration().getId();
+                typeId = type.resolve().asReferenceType().getTypeDeclaration().get().getId();
             } catch (UnsupportedOperationException err) {
                 if (resolveGenericType(typeName)) isGenericType = true;
                 else throw err;
+            }catch (UnsolvedSymbolException err){
+                err.printStackTrace();
             }
             DataType result = new DataType(typeId, typeName, isArray);
             if (isGenericType) result.setGenericType(true);

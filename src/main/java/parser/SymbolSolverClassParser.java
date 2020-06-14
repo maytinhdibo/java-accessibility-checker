@@ -175,10 +175,10 @@ public class SymbolSolverClassParser extends ClassParser {
             boolean isGenericType = false;
             ParseFrom parseFrom = null;
             try {
-                typeId = type.asReferenceType().getTypeDeclaration().getId();
+                typeId = type.asReferenceType().getTypeDeclaration().get().getId();
 //                typeName = typeId;
             } catch (UnsupportedOperationException err) {
-//                err.printStackTrace();
+                err.printStackTrace();
                 if (type.asTypeParameter().declaredOnMethod() || type.asTypeParameter().declaredOnConstructor()) {
                     typeId = type.describe();
                     parseFrom = new ParseFrom(true);
@@ -295,11 +295,9 @@ public class SymbolSolverClassParser extends ClassParser {
             });
         }
 
-        ResolvedType superClass = reflectionClass.getSuperClass();
-
-        if (superClass != null) {
-            projectParser.parseClass(superClass.describe());
-            classModel.setClassExtended(superClass.describe());
+        if (reflectionClass.getSuperClass().isPresent()) {
+            projectParser.parseClass(reflectionClass.getSuperClass().get().describe());
+            classModel.setClassExtended(reflectionClass.getSuperClass().get().describe());
         }
         //parse generic type
         parseGenericType(reflectionClass.getTypeParameters());

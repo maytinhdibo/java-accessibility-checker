@@ -5,6 +5,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
@@ -26,10 +27,7 @@ import utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class ProjectParser {
@@ -45,6 +43,7 @@ public class ProjectParser {
         ProjectParser projectParser = new ProjectParser();
         projectParser.addSource(Config.SOURCE_PATH);
         projectParser.setProjectPath(Config.PROJECT_DIR);
+
         try {
             projectParser.addJarFile("/Users/maytinhdibo/Downloads/org.json-chargebee-1.0.jar");
         } catch (IOException e) {
@@ -52,6 +51,7 @@ public class ProjectParser {
         }
         System.out.println("Starting parser...");
         projectParser.parse();
+//        projectParser.canAccessBlock(25, 7, "/Users/maytinhdibo/Project/bomberman/src/com/carlosflorencio/bomberman/Bomberman.java");
         System.out.println("Parse done!");
     }
 
@@ -107,6 +107,8 @@ public class ProjectParser {
             CompilationUnit compilationUnit = StaticJavaParser.parse(data);
 //            SymbolSolver.resolvedType(compilationUnit);
 
+            if(!compilationUnit.getPackageDeclaration().isPresent()) continue;
+
             String packageName = compilationUnit.getPackageDeclaration().get().getName().toString();
             compilationUnit.findAll(ClassOrInterfaceDeclaration.class).forEach(klass -> {
                 ProjectClassParser classParser = new ProjectClassParser(klass, packageName, this);
@@ -119,9 +121,9 @@ public class ProjectParser {
                     if (!(be instanceof MarkerAnnotationExpr)) {
                         ResolvedType resolvedType = be.calculateResolvedType();
                         if (resolvedType.isReferenceType()) {
-                            ResolvedReferenceTypeDeclaration declaration = resolvedType.asReferenceType().getTypeDeclaration();
-                            if (declaration instanceof ReflectionClassDeclaration || declaration instanceof JavassistClassDeclaration) {
-                                parseClass((AbstractClassDeclaration) declaration);
+                            Optional<ResolvedReferenceTypeDeclaration> declaration = resolvedType.asReferenceType().getTypeDeclaration();
+                            if (declaration.get() instanceof ReflectionClassDeclaration || declaration.get() instanceof JavassistClassDeclaration) {
+                                parseClass((AbstractClassDeclaration) declaration.get());
                             }
                         }
                     }
@@ -134,6 +136,18 @@ public class ProjectParser {
         }
     }
 
+    public void canAccessBlock(int line, int col, String file) {
+        String data = FileProcess.read(new File(file));
+        CompilationUnit compilationUnit = StaticJavaParser.parse(data);
+
+        compilationUnit.findAll(BlockStmt.class).forEach(be -> {
+            System.out.println("a");
+        });
+    }
+
+    public void canAccessBlock(int line, int col, BlockStmt blockStmt) {
+
+    }
 
     public boolean isExtended(String classId, String parentId) {
         if (parentId.equals("java.lang.Object")) return true;
