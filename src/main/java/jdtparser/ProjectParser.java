@@ -25,8 +25,14 @@ public class ProjectParser {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting parse...");
         ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.CLASS_PATH);
-        ITypeBinding clazz = projectParser.getClassScope(1805, new File("/Users/maytinhdibo/Downloads/data/cassandra/src/java/org/apache/cassandra/hadoop/ConfigHelper.java"));
-        HashMap<String, ClassModel> listAccess = projectParser.getListAccess(clazz);
+
+        try {
+            ITypeBinding clazz = projectParser.getClassScope(1805, new File("/Users/maytinhdibo/Downloads/data/cassandra/src/java/org/apache/cassandra/hadoop/ConfigHelper.java"));
+            HashMap<String, ClassModel> listAccess = projectParser.getListAccess(clazz);
+        } catch (NullPointerException err) {
+            err.printStackTrace();
+        }
+
         System.out.println("Parse done!");
     }
 
@@ -108,7 +114,7 @@ public class ProjectParser {
         }
     }
 
-    public ITypeBinding getClassScope(int position, File file) {
+    public ITypeBinding getClassScope(int position, File file) throws NullPointerException {
         CompilationUnit cu = createCU(sourcePaths, classPaths, file);
         final TypeDeclaration[] result = {null};
         cu.accept(new ASTVisitor() {
@@ -122,9 +128,9 @@ public class ProjectParser {
                 return true;
             }
         });
+        if (result[0] == null) throw new NullPointerException();
         return result[0].resolveBinding();
     }
 
 
 }
-
