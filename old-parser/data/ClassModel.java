@@ -12,7 +12,7 @@ public class ClassModel implements Cloneable {
     private StringConstant accessModifier;
     private List<Member> members = new ArrayList<>();
     private List<String> genericTypes = new ArrayList<>();
-    private String classExtended;
+    private ClassModel classExtended;
     private List<String> interfaces = new ArrayList<>();
 
     public ClassModel(String packageName, String classId, boolean isInterface, StringConstant accessModifier) {
@@ -22,11 +22,11 @@ public class ClassModel implements Cloneable {
         this.accessModifier = accessModifier;
     }
 
-    public String getClassExtended() {
+    public ClassModel getClassExtended() {
         return classExtended;
     }
 
-    public void setClassExtended(String classExtended) {
+    public void setClassExtended(ClassModel classExtended) {
         this.classExtended = classExtended;
     }
 

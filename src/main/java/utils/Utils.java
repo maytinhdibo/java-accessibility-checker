@@ -1,6 +1,7 @@
 package utils;
 
 import config.StringConstant;
+import org.eclipse.jdt.core.dom.Modifier;
 
 import java.util.Arrays;
 
@@ -12,16 +13,15 @@ public class Utils {
         return id.replaceAll("\\<.*\\>(\\(.*\\))?(\\{.*\\})?", "");
     }
 
-    public static int getValueAccessModifier(StringConstant accessModifier) {
-        switch (accessModifier) {
-            case PRIVATE:
-                return 0;
-            case PROTECTED:
-                return 2;
-            case PUBLIC:
-                return 3;
-            default:
-                return 1;
+    public static int getValueAccessModifier(int modifers) {
+        if (Modifier.isPrivate(modifers)) {
+            return 0;
+        } else if (Modifier.isProtected(modifers)) {
+            return 2;
+        } else if (Modifier.isPublic(modifers)) {
+            return 3;
+        } else {
+            return 1;
         }
     }
 
@@ -33,32 +33,18 @@ public class Utils {
         return classPackageName;
     }
 
-    public static boolean checkVisibleMember(StringConstant accessModifier, String classId, String memberClassId, boolean isExtended) {
-        String classPackageName = null;
-        String memberPackageName = null;
+    public static boolean checkVisibleMember(int modifier, String fromPackage, String checkPackage, boolean isExtended) {
 
-        classPackageName = getPackageName(classId);
-        memberPackageName = getPackageName(memberClassId);
+        if (Modifier.isPublic(modifier)) return true;
+        if (Modifier.isPrivate(modifier)) return false;
 
-        if (memberClassId.equals(classId)) {
-            //class declare
-            return true;
-        }
-        if (classPackageName.equals(memberPackageName)) {
-            //same package
-            if (classPackageName != memberPackageName) {
-                if (accessModifier == StringConstant.PRIVATE) return false;
-            }
-        } else if (isExtended) {
-            //super class
-            if (memberPackageName != classPackageName) {
-                if (getValueAccessModifier(accessModifier) < 2) return false;
-            }
+        if (Modifier.isProtected(modifier)) {
+            if (fromPackage.equals(checkPackage) || isExtended) return true;
         } else {
-            if (memberPackageName != classPackageName) {
-                if (accessModifier != StringConstant.PUBLIC) return false;
+            if (fromPackage.equals(checkPackage)) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }

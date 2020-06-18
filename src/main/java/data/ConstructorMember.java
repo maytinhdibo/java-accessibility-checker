@@ -1,9 +1,9 @@
 package data;
 
-import config.StringConstant;
+import org.eclipse.jdt.core.dom.IBinding;
 
-public class ConstructorMember extends MemberWithParams {
-    public ConstructorMember(String name, StringConstant accessLevel) {
-        super(name, accessLevel);
+public class ConstructorMember extends Member{
+    public ConstructorMember(IBinding member) {
+        super(member);
     }
 }

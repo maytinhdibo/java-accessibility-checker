@@ -1,53 +1,26 @@
 package data;
 
-import config.StringConstant;
+import org.eclipse.jdt.core.dom.IBinding;
 
-public class Member implements Cloneable{
-    protected String name;
-    protected StringConstant accessModifier;
-    protected ClassModel parentClass;
-    private String originClass;
+import java.util.List;
 
+public class Member {
+    private IBinding member;
 
-    public Member(String name, StringConstant accessModifier) {
-        this.name = name;
-        this.accessModifier = accessModifier;
+    public Member(IBinding member) {
+        this.member = member;
     }
 
-    public String getName() {
-        return name;
+    public IBinding getMember() {
+        return member;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public StringConstant getAccessModifier() {
-        return accessModifier;
-    }
-
-    public void setAccessModifier(StringConstant accessModifier) {
-        this.accessModifier = accessModifier;
-    }
-
-    public ClassModel getParentClass() {
-        return parentClass;
-    }
-
-    public void setParentClass(ClassModel parentClass) {
-        this.parentClass = parentClass;
-    }
-
-    public String getOriginClass() {
-        return originClass;
-    }
-
-    public void setOriginClass(String originClass) {
-        this.originClass = originClass;
+    public void setMember(IBinding member) {
+        this.member = member;
     }
 
     @Override
     public String toString() {
-        return this.name;
+        return member.toString();
     }
 }

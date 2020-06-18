@@ -12,6 +12,13 @@ public class MemberWithParams extends Member {
         super(name, accessModifier);
     }
 
+    public MemberWithParams(MemberWithParams memberWithParams) {
+        super(memberWithParams.getName(), memberWithParams.getAccessModifier());
+        this.setParams(memberWithParams.getParams());
+        this.setParentClass(memberWithParams.getParentClass());
+        this.setOriginClass(memberWithParams.getOriginClass());
+    }
+
     public List<DataType> getParams() {
         return params;
     }
@@ -19,6 +26,11 @@ public class MemberWithParams extends Member {
     public void addParam(DataType param) {
         this.params.add(param);
     }
+
+    public void setParams(List<DataType> params) {
+        this.params = params;
+    }
+
 
     @Override
     public String toString() {
