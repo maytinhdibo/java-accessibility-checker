@@ -2,8 +2,7 @@ package jdtparser;
 
 import config.Config;
 import data.Member;
-import data.TypeModel;
-import data.TypeModel;
+import data.ClassModel;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
@@ -17,7 +16,7 @@ import java.util.*;
 
 
 public class ProjectParser {
-    public HashMap<String, TypeModel> classListModel = new HashMap<>();
+    public HashMap<String, ClassModel> classListModel = new HashMap<>();
 
     private String projectDir;
     private String[] sourcePaths;
@@ -26,35 +25,35 @@ public class ProjectParser {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting parse...");
         ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.CLASS_PATH);
-        ITypeBinding clazz = projectParser.getClassScope(1805, new File("file:///Users/maytinhdibo/Downloads/data/cassandra/src/java/org/apache/cassandra/hadoop/ConfigHelper.java"));
-        HashMap<String, TypeModel> listAccess = projectParser.getListAccess(clazz);
+        ITypeBinding clazz = projectParser.getClassScope(1805, new File("/Users/maytinhdibo/Downloads/data/cassandra/src/java/org/apache/cassandra/hadoop/ConfigHelper.java"));
+        HashMap<String, ClassModel> listAccess = projectParser.getListAccess(clazz);
         System.out.println("Parse done!");
     }
 
-    private HashMap<String, TypeModel> getListAccess(ITypeBinding clazz) {
-        HashMap<String, TypeModel> listAccess = new HashMap<>();
-        for (Map.Entry<String, TypeModel> entry : classListModel.entrySet()) {
+    private HashMap<String, ClassModel> getListAccess(ITypeBinding clazz) {
+        HashMap<String, ClassModel> listAccess = new HashMap<>();
+        for (Map.Entry<String, ClassModel> entry : classListModel.entrySet()) {
             String key = entry.getKey();
-            TypeModel typeModel = entry.getValue();
+            ClassModel classModel = entry.getValue();
 
-            if (clazz == typeModel.getOrgType()) {
-                listAccess.put(clazz.getKey(), typeModel.clone());
+            if (clazz == classModel.getOrgType()) {
+                listAccess.put(clazz.getKey(), classModel.clone());
                 continue;
             } else {
-                boolean extended = clazz.isSubTypeCompatible(typeModel.getOrgType());
+                boolean extended = clazz.isSubTypeCompatible(classModel.getOrgType());
 
                 String fromPackage = clazz.getPackage().getName();
                 String toPackage = "-1";
-                if (typeModel.getOrgType().getPackage() != null) {
-                    toPackage = typeModel.getOrgType().getPackage().getName();
+                if (classModel.getOrgType().getPackage() != null) {
+                    toPackage = classModel.getOrgType().getPackage().getName();
                 }
 
-                if (Utils.checkVisibleMember(typeModel.getOrgType().getModifiers(), fromPackage, toPackage, extended)) {
-                    TypeModel cloneModel = typeModel.clone();
+                if (Utils.checkVisibleMember(classModel.getOrgType().getModifiers(), fromPackage, toPackage, extended)) {
+                    ClassModel cloneModel = classModel.clone();
                     listAccess.put(key, cloneModel);
                     List<Member> toRemoves = new ArrayList<>();
                     String finalToPackage = toPackage;
-                    typeModel.getMembers().forEach(member -> {
+                    classModel.getMembers().forEach(member -> {
                         if (!Utils.checkVisibleMember(member.getMember().getModifiers(), fromPackage, finalToPackage, extended)) {
                             toRemoves.add(member);
                         }
@@ -78,9 +77,9 @@ public class ProjectParser {
     public void parseClass(ITypeBinding iTypeBinding) {
         if (iTypeBinding == null) return;
         if (iTypeBinding.isPrimitive()) return;
-        TypeModel typeModel = new TypeModel(iTypeBinding);
+        ClassModel classModel = new ClassModel(iTypeBinding);
 
-        classListModel.put(typeModel.getOrgType().getKey(), typeModel);
+        classListModel.put(classModel.getOrgType().getKey(), classModel);
     }
 
     public CompilationUnit createCU(String[] sourcePaths, String[] classpath, File file) {

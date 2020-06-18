@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TypeModel {
+public class ClassModel {
     private ITypeBinding orgType;
     private List<IMethodBinding> methods = new ArrayList<>();
     private List<IVariableBinding> fields = new ArrayList<>();
@@ -78,7 +78,7 @@ public class TypeModel {
         return false;
     }
 
-    public TypeModel(ITypeBinding orgType) {
+    public ClassModel(ITypeBinding orgType) {
         this.orgType = orgType;
 
         methods = new ArrayList<>(Arrays.asList(orgType.getDeclaredMethods()));
@@ -90,9 +90,9 @@ public class TypeModel {
         parseFields(fields);
     }
 
-    public TypeModel(TypeModel typeModel) {
-        this.orgType = typeModel.getOrgType();
-        this.members.addAll(typeModel.getMembers());
+    public ClassModel(ClassModel classModel) {
+        this.orgType = classModel.getOrgType();
+        this.members.addAll(classModel.getMembers());
     }
 
 
@@ -108,9 +108,9 @@ public class TypeModel {
         return members;
     }
 
-    public TypeModel clone() {
-        TypeModel typeModel = new TypeModel(this);
-        return typeModel;
+    public ClassModel clone() {
+        ClassModel classModel = new ClassModel(this);
+        return classModel;
     }
 
     @Override
