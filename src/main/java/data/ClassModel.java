@@ -87,6 +87,7 @@ public class ClassModel {
         parseSuperMember(orgType.getSuperclass());
 
         parseMethodsAndConstructors(methods);
+
         parseFields(fields);
     }
 
