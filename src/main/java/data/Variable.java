@@ -3,6 +3,7 @@ package data;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
 public class Variable {
+    int startPosition = -1;
     private ITypeBinding typeBinding;
     private String name;
 
