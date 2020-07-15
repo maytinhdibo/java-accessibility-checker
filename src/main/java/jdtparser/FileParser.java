@@ -3,6 +3,7 @@ package jdtparser;
 import data.ClassModel;
 import data.Variable;
 import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.internal.core.JavaElement;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class FileParser {
 
     private CompilationUnit cu;
 
-    public List<Variable> visibleVariable;
+    public List<Variable> visibleVariable = new ArrayList<>();
     public HashMap<String, ClassModel> visibleClass;
 
     public FileParser(ProjectParser projectParser, File curFile, int curPosition) {
@@ -24,6 +25,12 @@ public class FileParser {
         this.curFile = curFile;
         this.curPosition = curPosition;
         cu = projectParser.createCU(curFile);
+        parse();
+    }
+
+    public void setPosition(int position) {
+        this.curPosition = position;
+        parse();
     }
 
     public void parse() {
@@ -38,19 +45,19 @@ public class FileParser {
         ASTNode scope = getScope(curPosition);
 
         if (scope != null) {
-            visibleVariable = getVariableScope(scope);
+            getVariableScope(scope);
         } else {
             visibleVariable.clear();
         }
     }
 
-    public static List<Variable> getVariableScope(ASTNode astNode) {
-        List<Variable> listVariable = new ArrayList<>();
-        getVariableScope(astNode, listVariable);
-        return listVariable;
-    }
+//    public List<Variable> getVariableScope(ASTNode astNode) {
+//        List<Variable> listVariable = new ArrayList<>();
+//        getVariableScope(astNode, listVariable);
+//        return listVariable;
+//    }
 
-    public static void getVariableScope(ASTNode astNode, List<Variable> variableList) {
+    public void getVariableScope(ASTNode astNode) {
         if (astNode == null) return;
         Block block = null;
         if (astNode instanceof Block) {
@@ -63,37 +70,47 @@ public class FileParser {
             params.forEach(param -> {
                 if (param instanceof SingleVariableDeclaration) {
                     SingleVariableDeclaration singleVariableDeclaration = (SingleVariableDeclaration) param;
-                    IVariableBinding variableBinding = singleVariableDeclaration.resolveBinding();
-                    ITypeBinding typeBinding = variableBinding.getType();
-                    String varName = singleVariableDeclaration.getName().toString();
+                    int position = singleVariableDeclaration.getStartPosition();
 
-                    if (!checkVariableInList(varName, variableList))
-                        variableList.add(new Variable(typeBinding, varName));
+                    IVariableBinding variableBinding = singleVariableDeclaration.resolveBinding();
+                    addVariableToList(position, variableBinding);
                 }
             });
         } else if (astNode instanceof TypeDeclaration) {
-            ITypeBinding classBinding = ((TypeDeclaration) astNode).resolveBinding();
-            IVariableBinding[] variableBindings = classBinding.getDeclaredFields();
-            for (IVariableBinding variableBinding : variableBindings) {
-                ITypeBinding typeBinding = variableBinding.getType();
-                String varName = variableBinding.getName();
+            FieldDeclaration[] fields = ((TypeDeclaration) astNode).getFields();
 
-                if (!checkVariableInList(varName, variableList))
-                    variableList.add(new Variable(typeBinding, varName));
+            for (FieldDeclaration field : fields) {
+                int position = field.getStartPosition();
+                List fragments = field.fragments();
+                fragments.forEach(fragment -> {
+                    if (fragment instanceof VariableDeclarationFragment) {
+                        VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) fragment;
+                        IVariableBinding variableBinding = variableDeclarationFragment.resolveBinding();
+
+                        addVariableToList(position, variableBinding);
+                    }
+                });
             }
+
+//            ITypeBinding classBinding = ((TypeDeclaration) astNode).resolveBinding();
+//            IVariableBinding[] variableBindings = classBinding.getDeclaredFields();
+//            for (IVariableBinding variableBinding : variableBindings) {
+//                ITypeBinding typeBinding = variableBinding.getType();
+//                String varName = variableBinding.getName();
+//
+//                if (!checkVariableInList(varName, visibleVariable))
+//                    visibleVariable.add(new Variable(typeBinding, varName));
+//            }
         } else if (astNode instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) astNode;
             List params = lambdaExpression.parameters();
             params.forEach(param -> {
                 if (param instanceof VariableDeclarationFragment) {
                     VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) param;
+                    int position = variableDeclarationFragment.getStartPosition();
                     IVariableBinding variableBinding = variableDeclarationFragment.resolveBinding();
 
-                    ITypeBinding typeBinding = variableBinding.getType();
-                    String varName = variableBinding.getName();
-
-                    if (!checkVariableInList(varName, variableList))
-                        variableList.add(new Variable(typeBinding, varName));
+                    addVariableToList(position, variableBinding);
                 }
             });
         } else if (astNode instanceof ForStatement) {
@@ -102,16 +119,13 @@ public class FileParser {
             inits.forEach(init -> {
                 if (init instanceof VariableDeclarationExpression) {
                     VariableDeclarationExpression variableDeclarationExpression = (VariableDeclarationExpression) init;
+                    int position = variableDeclarationExpression.getStartPosition();
                     List variableDeclarations = variableDeclarationExpression.fragments();
                     variableDeclarations.forEach(variableDeclarationItem -> {
                         if (variableDeclarationItem instanceof VariableDeclarationFragment) {
                             IVariableBinding variableBinding = ((VariableDeclarationFragment) variableDeclarationItem).resolveBinding();
 
-                            ITypeBinding typeBinding = variableBinding.getType();
-                            String varName = variableBinding.getName();
-
-                            if (!checkVariableInList(varName, variableList))
-                                variableList.add(new Variable(typeBinding, varName));
+                            addVariableToList(position, variableBinding);
                         }
                     });
                 }
@@ -120,12 +134,11 @@ public class FileParser {
             EnhancedForStatement enhancedForStatement = (EnhancedForStatement) astNode;
             SingleVariableDeclaration singleVariableDeclaration = enhancedForStatement.getParameter();
 
-            IVariableBinding variableBinding = singleVariableDeclaration.resolveBinding();
-            ITypeBinding typeBinding = variableBinding.getType();
-            String varName = singleVariableDeclaration.getName().toString();
+            int position = singleVariableDeclaration.getStartPosition();
 
-            if (!checkVariableInList(varName, variableList))
-                variableList.add(new Variable(typeBinding, varName));
+            IVariableBinding variableBinding = singleVariableDeclaration.resolveBinding();
+
+            addVariableToList(position, variableBinding);
         }
 
         if (block != null) {
@@ -133,27 +146,26 @@ public class FileParser {
             listStatement.forEach(stmt -> {
                 if (stmt instanceof VariableDeclarationStatement) {
                     VariableDeclarationStatement declareStmt = (VariableDeclarationStatement) stmt;
+                    int position = declareStmt.getStartPosition();
                     declareStmt.fragments().forEach(fragment -> {
                         if (fragment instanceof VariableDeclarationFragment) {
                             IVariableBinding variableBinding = ((VariableDeclarationFragment) fragment).resolveBinding();
-                            String varName = ((VariableDeclarationFragment) fragment).getName().toString();
-                            if (!checkVariableInList(varName, variableList))
-                                variableList.add(new Variable(variableBinding.getType(), varName));
+                            addVariableToList(position, variableBinding);
                         }
                     });
                 }
             });
         }
 
-        getVariableScope(getParentBlock(astNode), variableList);
+        getVariableScope(getParentBlock(astNode));
     }
 
-    private void addVariableToList(int startPosition, IVariableBinding variableBinding, List<Variable> variableList) {
+    private void addVariableToList(int startPosition, IVariableBinding variableBinding) {
         ITypeBinding typeBinding = variableBinding.getType();
         String varName = variableBinding.getName();
 
-        if (!checkVariableInList(varName, variableList))
-            variableList.add(new Variable(typeBinding, varName));
+        if (!checkVariableInList(varName, visibleVariable) && startPosition <= curPosition)
+            visibleVariable.add(new Variable(typeBinding, varName));
     }
 
     public static boolean checkVariableInList(String varName, List<Variable> variableList) {

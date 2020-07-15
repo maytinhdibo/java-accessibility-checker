@@ -4,6 +4,7 @@ import config.Config;
 import data.Member;
 import data.ClassModel;
 import data.Variable;
+import org.checkerframework.checker.units.qual.C;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
@@ -12,7 +13,6 @@ import utils.FileProcess;
 import utils.Utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 
@@ -27,11 +27,9 @@ public class ProjectParser {
         System.out.println("Starting parse...");
         ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.CLASS_PATH);
 
-        File curFile = new File("/Users/maytinhdibo/Project/bomberman/src/com/carlosflorencio/bomberman/TestExtended.java");
+        File curFile = new File(Config.TEST_FILE_PATH);
 
-        FileParser fileParser = new FileParser(projectParser, curFile, 1013);
-
-        fileParser.parse();
+        FileParser fileParser = new FileParser(projectParser, curFile, Config.TEST_POSITION);
 
         System.out.println("Parse done!");
     }

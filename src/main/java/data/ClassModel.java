@@ -1,6 +1,7 @@
 package data;
 
 import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +18,7 @@ public class ClassModel {
             if (methodBindings.get(i).isConstructor()) {
                 members.add(new ConstructorMember(methodBindings.get(i)));
             } else {
-                members.add(new MethodMember(methodBindings.get(i)));
+                members.add(new MethodMember((IMethodBinding) methodBindings.get(i)));
             }
         }
     }

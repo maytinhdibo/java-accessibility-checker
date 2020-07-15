@@ -1,9 +1,10 @@
 package data;
 
-import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 
 public class MethodMember extends Member {
-    public MethodMember(IBinding member) {
-        super(member);
+
+    public MethodMember(IMethodBinding member) {
+        super.setMember(member);
     }
 }

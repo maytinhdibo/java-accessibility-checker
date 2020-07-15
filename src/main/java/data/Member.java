@@ -11,6 +11,9 @@ public class Member {
         this.member = member;
     }
 
+    public Member() {
+    }
+
     public IBinding getMember() {
         return member;
     }
