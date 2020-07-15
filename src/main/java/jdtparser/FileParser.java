@@ -57,7 +57,7 @@ public class FileParser {
 //        return listVariable;
 //    }
 
-    public void getVariableScope(ASTNode astNode) {
+    private void getVariableScope(ASTNode astNode) {
         if (astNode == null) return;
         Block block = null;
         if (astNode instanceof Block) {
@@ -232,4 +232,23 @@ public class FileParser {
         return false;
     }
 
+    public File getCurFile() {
+        return curFile;
+    }
+
+    public int getCurPosition() {
+        return curPosition;
+    }
+
+    public CompilationUnit getCu() {
+        return cu;
+    }
+
+    public List<Variable> getVisibleVariable() {
+        return visibleVariable;
+    }
+
+    public HashMap<String, ClassModel> getVisibleClass() {
+        return visibleClass;
+    }
 }

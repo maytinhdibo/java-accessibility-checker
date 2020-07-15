@@ -31,6 +31,8 @@ public class ProjectParser {
 
         FileParser fileParser = new FileParser(projectParser, curFile, Config.TEST_POSITION);
 
+
+
         System.out.println("Parse done!");
     }
 
