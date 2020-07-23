@@ -3,8 +3,6 @@ package jdtparser;
 import config.Config;
 import data.Member;
 import data.ClassModel;
-import data.Variable;
-import org.checkerframework.checker.units.qual.C;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
@@ -30,8 +28,6 @@ public class ProjectParser {
         File curFile = new File(Config.TEST_FILE_PATH);
 
         FileParser fileParser = new FileParser(projectParser, curFile, Config.TEST_POSITION);
-
-
 
         System.out.println("Parse done!");
     }
@@ -93,10 +89,10 @@ public class ProjectParser {
         parser.setResolveBindings(true);// turn on binding strategy
         parser.setKind(ASTParser.K_COMPILATION_UNIT);// the source code is a file .java
         parser.setBindingsRecovery(true);
+        parser.setStatementsRecovery(true);
         Hashtable<String, String> options = JavaCore.getOptions();
 
         JavaCore.setComplianceOptions(JavaCore.VERSION_13, options);
-
 
         parser.setCompilerOptions(options);
         parser.setEnvironment(classPaths, sourcePaths, new String[]{"UTF-8"}, true);

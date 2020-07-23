@@ -26,6 +26,27 @@ public class FileParser {
         this.curPosition = curPosition;
         cu = projectParser.createCU(curFile);
         parse();
+        testAssigment();
+
+        int startPos = 0;
+        int stopPos = 2000;
+        TypeChecker typeChecker = new TypeChecker(cu, startPos, stopPos);
+        boolean check = typeChecker.check();
+    }
+
+    public void testAssigment() {
+        cu.accept(new ASTVisitor() {
+            public boolean visit(Assignment assignment) {
+                ITypeBinding d = assignment.getLeftHandSide().resolveTypeBinding();
+                ITypeBinding m = assignment.getRightHandSide().resolveTypeBinding();
+                if (d != null && m != null) {
+                    Object r = m.isAssignmentCompatible(d);
+                    boolean re1 = d.isSubTypeCompatible(m);
+                    boolean re2 = m.isSubTypeCompatible(d);
+                }
+                return true;
+            }
+        });
     }
 
     public void setPosition(int position) {
