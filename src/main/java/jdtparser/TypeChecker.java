@@ -91,31 +91,28 @@ class TypeCheckerVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(PrefixExpression prefixExpression) {
-        ITypeBinding type = prefixExpression.resolveTypeBinding();
-        if (type == null) {
-            addValue(0);
-            return false;
-        }
-        if (type.isPrimitive() && !type.getName().equals("boolean")) {
-            addValue(1);
-            return true;
-        }
-        addValue(-1);
-        return true;
+        return typeExprCalc(prefixExpression);
     }
 
     @Override
     public boolean visit(PostfixExpression postfixExpression) {
-        ITypeBinding type = postfixExpression.resolveTypeBinding();
-        if (type == null) {
-            addValue(0);
+        return typeExprCalc(postfixExpression);
+    }
+
+    @Override
+    public boolean visit(InfixExpression infixExpression) {
+        return typeExprCalc(infixExpression);
+    }
+
+    private boolean typeExprCalc(Expression expression) {
+        ITypeBinding typeBinding = expression.resolveTypeBinding();
+        if (typeBinding == null) {
+            // infix expr can not be calculate
+            addValue(-1);
             return false;
-        }
-        if (type.isPrimitive() && !type.getName().equals("boolean")) {
+        } else {
             addValue(1);
-            return true;
         }
-        addValue(-1);
         return true;
     }
 
