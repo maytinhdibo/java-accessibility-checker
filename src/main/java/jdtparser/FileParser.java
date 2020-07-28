@@ -3,7 +3,6 @@ package jdtparser;
 import data.ClassModel;
 import data.Variable;
 import org.eclipse.jdt.core.dom.*;
-import org.eclipse.jdt.internal.core.JavaElement;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,13 +24,12 @@ public class FileParser {
         this.curFile = curFile;
         this.curPosition = curPosition;
         cu = projectParser.createCU(curFile);
-        parse();
-        testAssigment();
+    }
 
-        int startPos = 0;
-        int stopPos = 2000;
+    public boolean typeCheck(int startPos, int stopPos){
+        cu = projectParser.createCU(curFile);
         TypeChecker typeChecker = new TypeChecker(cu, startPos, stopPos);
-        boolean check = typeChecker.check();
+        return typeChecker.check();
     }
 
     public void testAssigment() {

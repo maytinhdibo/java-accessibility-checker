@@ -3,7 +3,22 @@ package jdtparser;
 import data.Variable;
 import org.eclipse.jdt.core.dom.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+enum CheckValue {
+    FALSE(-1), UNKNOWN(0), CAST(1), TRUE(2);
+    private int value;
+
+    public int getValue() {
+        return this.value;
+    }
+
+    CheckValue(int value) {
+        this.value = value;
+    }
+}
 
 public class TypeChecker {
     private CompilationUnit cu;
@@ -21,44 +36,10 @@ public class TypeChecker {
         cu.accept(visitor);
         return true;
     }
-
-    public static int checkStatement(ASTNode astNode) {
-        // 0    ASTNode can not be checked
-        // 1    true
-        // 2    cast
-        // -1   false
-        if (astNode instanceof VariableDeclarationStatement) {
-            VariableDeclarationStatement variableDeclarationStmt = (VariableDeclarationStatement) astNode;
-            List fragments = variableDeclarationStmt.fragments();
-            fragments.forEach(fragment -> {
-                if (fragment instanceof VariableDeclarationFragment) {
-                    VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) fragment;
-                    ((VariableDeclarationFragment) fragment).resolveBinding();
-                    Expression expression = variableDeclarationFragment.getInitializer();
-                    System.out.println("a");
-                }
-            });
-        } else if (astNode instanceof VariableDeclarationFragment) {
-            return 1;
-        } else if (astNode instanceof Assignment) {
-            return 1;
-        } else if (astNode instanceof PrefixExpression) {
-            return 1;
-        } else if (astNode instanceof PostfixExpression) {
-            return 1;
-        } else if (astNode instanceof InfixExpression) {
-            return 1;
-        } else if (astNode instanceof MethodInvocation) {
-            return 1;
-        } else if (astNode instanceof ConstructorInvocation) {
-
-        }
-        return 0;
-    }
 }
 
 class TypeCheckerVisitor extends ASTVisitor {
-    public int status = 9;
+    public CheckValue status = CheckValue.TRUE;
     private int startPos, stopPos;
 
     public TypeCheckerVisitor(int startPos, int stopPos) {
@@ -108,10 +89,10 @@ class TypeCheckerVisitor extends ASTVisitor {
         ITypeBinding typeBinding = expression.resolveTypeBinding();
         if (typeBinding == null) {
             // infix expr can not be calculate
-            addValue(-1);
+            addValue(CheckValue.FALSE);
             return false;
         } else {
-            addValue(1);
+            addValue(CheckValue.TRUE);
         }
         return true;
     }
@@ -125,13 +106,113 @@ class TypeCheckerVisitor extends ASTVisitor {
         return true;
     }
 
+    public boolean visitArgInvocation(IMethodBinding iMethodBinding, List invocationArgList, boolean isVarargs) {
+        List<ITypeBinding> invocationITypeBindings = new ArrayList<>();
+
+        invocationArgList.forEach(node -> {
+            if (node instanceof Expression) {
+                Expression expr = (Expression) node;
+                invocationITypeBindings.add(expr.resolveTypeBinding());
+            }
+        });
+
+
+        List<ITypeBinding> methodITypeBindings = Arrays.asList(iMethodBinding.getParameterTypes());
+
+        if (invocationITypeBindings.size() < methodITypeBindings.size()) {
+            return addValue(CheckValue.FALSE);
+        }
+
+        CheckValue equalListType = checkListType(methodITypeBindings, invocationITypeBindings);
+
+        if (!iMethodBinding.isVarargs()) {
+            if (equalListType == CheckValue.TRUE) {
+                addValue(CheckValue.TRUE);
+                return true;
+            } else {
+                return addValue(CheckValue.FALSE);
+            }
+        } else {
+            /** Varargs
+             *  Each method can only have one varargs parameter
+             *  The varargs argument must be the last parameter **/
+            CheckValue equalFirst = checkListType(methodITypeBindings.subList(0, methodITypeBindings.size() - 1), invocationITypeBindings.subList(0, methodITypeBindings.size() - 1));
+            ITypeBinding typeVarargs = methodITypeBindings.get(methodITypeBindings.size() - 1);
+
+            if (equalFirst != CheckValue.TRUE || !typeVarargs.isArray()) {
+                return addValue(CheckValue.FALSE);
+            }
+            ITypeBinding componentType = typeVarargs.getComponentType();
+
+            for (int i = methodITypeBindings.size() - 1; i < invocationITypeBindings.size(); i++) {
+                if (invocationITypeBindings.get(i).isAssignmentCompatible(componentType)) continue;
+                if (invocationITypeBindings.get(i).isCastCompatible(componentType)) {
+                    addValue(CheckValue.CAST);
+                    continue;
+                }
+                if (invocationITypeBindings.get(i) == null) {
+                    addValue(CheckValue.UNKNOWN);
+                    continue;
+                }
+                addValue(CheckValue.FALSE);
+                break;
+            }
+
+        }
+        return addValue(CheckValue.TRUE);
+    }
+
+    @Override
+    public boolean visit(ConstructorInvocation constructorInvocation) {
+        List invocationArgList = constructorInvocation.arguments();
+
+        IMethodBinding iMethodBinding = constructorInvocation.resolveConstructorBinding();
+        //Skip unresolved method
+        if (iMethodBinding == null) return true;
+
+        return visitArgInvocation(iMethodBinding, invocationArgList, iMethodBinding.isVarargs());
+    }
+
+    @Override
+    public boolean visit(MethodInvocation methodInvocation) {
+        List invocationArgList = methodInvocation.arguments();
+
+        IMethodBinding iMethodBinding = methodInvocation.resolveMethodBinding();
+        //Skip unresolved method
+        if (iMethodBinding == null) return true;
+
+        return visitArgInvocation(iMethodBinding, invocationArgList, iMethodBinding.isVarargs());
+    }
+
+    public CheckValue checkListType(List<ITypeBinding> listDeclaration, List<ITypeBinding> listInvocation) {
+        CheckValue value = CheckValue.TRUE;
+        if (listDeclaration.size() != listInvocation.size()) return CheckValue.FALSE;
+
+        for (int i = 0; i < listInvocation.size(); i++) {
+            CheckValue compareType = compareType(listDeclaration.get(i), listInvocation.get(i));
+            if (compareType.getValue() < value.getValue()) value = compareType;
+            if (compareType == CheckValue.FALSE) return CheckValue.FALSE;
+        }
+        return value;
+    }
+
+
     @Override
     public boolean visit(ReturnStatement returnStatement) {
         ITypeBinding leftType = getMethodType(returnStatement);
-        ITypeBinding rightType = returnStatement.getExpression().resolveTypeBinding();
 
-        addValue(compareType(leftType, rightType));
-        return true;
+        Expression returnExpression = returnStatement.getExpression();
+
+        if (returnExpression != null) {
+            ITypeBinding rightType = returnStatement.getExpression().resolveTypeBinding();
+            return addValue(compareType(leftType, rightType));
+        } else {
+            if (leftType.isPrimitive() && leftType.getName().equals("void")) {
+                return addValue(CheckValue.TRUE);
+            }
+        }
+
+        return addValue(CheckValue.FALSE);
     }
 
     public ITypeBinding getMethodType(ASTNode astNode) {
@@ -142,24 +223,28 @@ class TypeCheckerVisitor extends ASTVisitor {
         return getMethodType(astNode.getParent());
     }
 
-    public int compareType(ITypeBinding leftType, ITypeBinding rightType) {
-        if (leftType == null || rightType == null) return 0;
-        if (rightType.isAssignmentCompatible(leftType)) return 1;
+    public CheckValue compareType(ITypeBinding leftType, ITypeBinding rightType) {
+        if (leftType == null || rightType == null) return CheckValue.UNKNOWN;
+        if (rightType.isAssignmentCompatible(leftType)) return CheckValue.TRUE;
         if (rightType.isCastCompatible(leftType)) {
-            return 2;
+            return CheckValue.CAST;
         }
 
         if (leftType.isPrimitive() && rightType.isPrimitive()
                 && !leftType.getName().equals("boolean") && !rightType.getName().equals("boolean")) {
-            return 2;
+            return CheckValue.CAST;
         }
 
         //Consider Integer, Float, Double,...
 
-        return -1;
+        return CheckValue.FALSE;
     }
 
-    public void addValue(int value) {
-        if (value < status) status = value;
+    public boolean addValue(CheckValue value) {
+        //return false to stop visit
+        if (value.getValue() < status.getValue())
+            status = value;
+        if (value.getValue() == -1) return false;
+        return true;
     }
 }
