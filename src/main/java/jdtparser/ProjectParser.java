@@ -8,9 +8,12 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 import utils.DirProcess;
 import utils.FileProcess;
+import utils.Timer;
 import utils.Utils;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -19,15 +22,30 @@ public class ProjectParser {
 
     private String projectDir;
     private String[] sourcePaths;
+    private String[] encodeSources;
     private String[] classPaths;
 
     public static void main(String[] args) {
+        Timer timer = new Timer();
+
+
         System.out.println("Starting parse...");
-        ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.CLASS_PATH);
+        ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.ENCODE_SOURCE, Config.CLASS_PATH);
+
+        System.out.print("Project parse time: ");
+        System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
 
         File curFile = new File(Config.TEST_FILE_PATH);
 
         FileParser fileParser = new FileParser(projectParser, curFile, Config.TEST_POSITION);
+        fileParser.parse();
+
+        System.out.print("File parse + : ");
+        System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
+
+        fileParser.typeCheck(500, 1000);
+        System.out.print("Type check + : ");
+        System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
 
         System.out.println("Parse done!");
     }
@@ -69,10 +87,11 @@ public class ProjectParser {
         return listAccess;
     }
 
-    public ProjectParser(String projectDir, String[] sourcePaths, String[] classPaths) {
+    public ProjectParser(String projectDir, String[] sourcePaths, String[] encodeSources, String[] classPaths) {
         this.projectDir = projectDir;
         this.sourcePaths = sourcePaths;
         this.classPaths = classPaths;
+        this.encodeSources = encodeSources;
         parse();
     }
 
@@ -95,7 +114,7 @@ public class ProjectParser {
         JavaCore.setComplianceOptions(JavaCore.VERSION_13, options);
 
         parser.setCompilerOptions(options);
-        parser.setEnvironment(classPaths, sourcePaths, new String[]{"UTF-8"}, true);
+        parser.setEnvironment(classPaths, sourcePaths, encodeSources, true);
 
         parser.setUnitName(file.getName());
         parser.setSource(FileProcess.read(file).toCharArray());

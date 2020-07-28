@@ -5,6 +5,7 @@ public class Config {
 
     public static String PROJECT_DIR = "/Users/maytinhdibo/Project/bomberman/";
     public static String[] SOURCE_PATH = {"/Users/maytinhdibo/Project/bomberman/src/"};
+    public static String[] ENCODE_SOURCE = {"utf-8"};
 
     public static String[] CLASS_PATH = {
 //            "/Users/maytinhdibo/Downloads/data/cassandra/lib/antlr-3.2.jar",
