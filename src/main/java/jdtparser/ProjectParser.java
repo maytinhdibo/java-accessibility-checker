@@ -5,6 +5,7 @@ import data.Member;
 import data.ClassModel;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.*;
 import utils.DirProcess;
 import utils.FileProcess;
@@ -38,14 +39,43 @@ public class ProjectParser {
         File curFile = new File(Config.TEST_FILE_PATH);
 
         FileParser fileParser = new FileParser(projectParser, curFile, Config.TEST_POSITION);
-        fileParser.parse();
+        try {
+            fileParser.parse();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        System.out.print("File parse + : ");
+        System.out.print("File parse: ");
         System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
 
-        fileParser.typeCheck(500, 1000);
-        System.out.print("Type check + : ");
+        List<IProblem> problems = fileParser.getErrors(0, 20000);
+        System.out.println(problems.isEmpty());
+        System.out.print("Type check: ");
         System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
+
+//        cassandra
+        List<File> listFile = DirProcess.walkJavaFile(Config.PROJECT_DIR);
+        listFile.forEach(file -> {
+            System.out.println(file.getAbsolutePath());
+
+            FileParser fileeParser = new FileParser(projectParser, file, Config.TEST_POSITION);
+
+            try {
+                fileeParser.parse();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+            System.out.print("File parse: ");
+            System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
+
+            List<IProblem> problemss = fileeParser.getErrors(0, 20000);
+            System.out.println(problemss.isEmpty());
+
+            System.out.print("Type check: ");
+            System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
+        });
 
         System.out.println("Parse done!");
     }
@@ -92,7 +122,7 @@ public class ProjectParser {
         this.sourcePaths = sourcePaths;
         this.classPaths = classPaths;
         this.encodeSources = encodeSources;
-        parse();
+//        parse();
     }
 
     public void parseClass(ITypeBinding iTypeBinding) {

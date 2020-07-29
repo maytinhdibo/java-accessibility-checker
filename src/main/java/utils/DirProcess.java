@@ -35,7 +35,7 @@ public class DirProcess {
 
 
     public static void main(String args[]) {
-        List<File> list = walkJavaFile("/Users/maytinhdibo/Project/bomberman/");
+        List<File> list = walkJavaFile("/Users/maytinhdibo/Downloads/data/cassandra/lib/");
         System.out.println(list.size());
     }
 

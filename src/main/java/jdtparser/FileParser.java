@@ -2,6 +2,7 @@ package jdtparser;
 
 import data.ClassModel;
 import data.Variable;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.*;
 
 import java.io.File;
@@ -26,7 +27,19 @@ public class FileParser {
         cu = projectParser.createCU(curFile);
     }
 
-    public boolean typeCheck(int startPos, int stopPos){
+    public List<IProblem> getErrors(int startPos, int stopPos) {
+        List<IProblem> problemList = new ArrayList<>();
+        IProblem[] iProblems = cu.getProblems();
+        for (IProblem iProblem : iProblems) {
+            if (iProblem.isError()) {
+                if (iProblem.getSourceEnd() < startPos || iProblem.getSourceStart() > stopPos) continue;
+                problemList.add(iProblem);
+            }
+        }
+        return problemList;
+    }
+
+    public boolean typeCheck(int startPos, int stopPos) {
         cu = projectParser.createCU(curFile);
         TypeChecker typeChecker = new TypeChecker(cu, startPos, stopPos);
         return typeChecker.check();
@@ -47,18 +60,18 @@ public class FileParser {
         });
     }
 
-    public void setPosition(int position) {
+    public void setPosition(int position) throws Exception {
         this.curPosition = position;
         parse();
     }
 
-    public void parse() {
+    public void parse() throws Exception {
         try {
             ITypeBinding clazz = getClassScope(curPosition);
             visibleClass = projectParser.getListAccess(clazz);
         } catch (NullPointerException err) {
             visibleClass.clear();
-            err.printStackTrace();
+            throw new Exception("Can not get class");
         }
 
         ASTNode scope = getScope(curPosition);

@@ -27,6 +27,8 @@ public class TypeChecker {
 
     public TypeChecker(CompilationUnit cu, int startPos, int stopPos) {
         this.cu = cu;
+        Object m = cu.getProblems();
+
         this.startPos = startPos;
         this.stopPos = stopPos;
     }
@@ -34,7 +36,7 @@ public class TypeChecker {
     public boolean check() {
         TypeCheckerVisitor visitor = new TypeCheckerVisitor(startPos, stopPos);
         cu.accept(visitor);
-        return true;
+        return visitor.status == CheckValue.TRUE;
     }
 }
 
@@ -62,6 +64,8 @@ class TypeCheckerVisitor extends ASTVisitor {
         if (init == null) return false;
 
         IVariableBinding variableBinding = variableDeclarationFragment.resolveBinding();
+
+
 
         ITypeBinding leftType = variableBinding.getType();
         ITypeBinding rightType = init.resolveTypeBinding();
@@ -102,7 +106,11 @@ class TypeCheckerVisitor extends ASTVisitor {
         ITypeBinding leftType = assignment.getLeftHandSide().resolveTypeBinding();
         ITypeBinding rightType = assignment.getRightHandSide().resolveTypeBinding();
 
-        addValue(compareType(leftType, rightType));
+        CheckValue compare = compareType(leftType, rightType);
+        if (compare == CheckValue.CAST || !assignment.getOperator().toString().equals("=")) {
+            return addValue(CheckValue.TRUE);
+        }
+        addValue(compare);
         return true;
     }
 
@@ -119,14 +127,13 @@ class TypeCheckerVisitor extends ASTVisitor {
 
         List<ITypeBinding> methodITypeBindings = Arrays.asList(iMethodBinding.getParameterTypes());
 
-        if (invocationITypeBindings.size() < methodITypeBindings.size()) {
-            return addValue(CheckValue.FALSE);
-        }
-
-        CheckValue equalListType = checkListType(methodITypeBindings, invocationITypeBindings);
+//        if (invocationITypeBindings.size() < methodITypeBindings.size()) {
+//            return addValue(CheckValue.FALSE);
+//        }
 
         if (!iMethodBinding.isVarargs()) {
-            if (equalListType == CheckValue.TRUE) {
+            CheckValue equalListType = checkListType(methodITypeBindings, invocationITypeBindings);
+            if (equalListType == CheckValue.TRUE && invocationITypeBindings.size() == methodITypeBindings.size()) {
                 addValue(CheckValue.TRUE);
                 return true;
             } else {
@@ -138,6 +145,10 @@ class TypeCheckerVisitor extends ASTVisitor {
              *  The varargs argument must be the last parameter **/
             CheckValue equalFirst = checkListType(methodITypeBindings.subList(0, methodITypeBindings.size() - 1), invocationITypeBindings.subList(0, methodITypeBindings.size() - 1));
             ITypeBinding typeVarargs = methodITypeBindings.get(methodITypeBindings.size() - 1);
+
+            ITypeBinding lastType = invocationITypeBindings.get(invocationITypeBindings.size() - 1);
+
+            if (lastType.isAssignmentCompatible(typeVarargs)) return addValue(CheckValue.TRUE);
 
             if (equalFirst != CheckValue.TRUE || !typeVarargs.isArray()) {
                 return addValue(CheckValue.FALSE);
@@ -162,6 +173,18 @@ class TypeCheckerVisitor extends ASTVisitor {
         return addValue(CheckValue.TRUE);
     }
 
+    public CheckValue checkListType(List<ITypeBinding> listDeclaration, List<ITypeBinding> listInvocation) {
+        CheckValue value = CheckValue.TRUE;
+        if (listDeclaration.size() != listInvocation.size()) return CheckValue.FALSE;
+
+        for (int i = 0; i < listInvocation.size(); i++) {
+            CheckValue compareType = compareType(listDeclaration.get(i), listInvocation.get(i));
+            if (compareType.getValue() < value.getValue()) value = compareType;
+            if (compareType == CheckValue.FALSE) return CheckValue.FALSE;
+        }
+        return value;
+    }
+
     @Override
     public boolean visit(ConstructorInvocation constructorInvocation) {
         List invocationArgList = constructorInvocation.arguments();
@@ -184,19 +207,6 @@ class TypeCheckerVisitor extends ASTVisitor {
         return visitArgInvocation(iMethodBinding, invocationArgList, iMethodBinding.isVarargs());
     }
 
-    public CheckValue checkListType(List<ITypeBinding> listDeclaration, List<ITypeBinding> listInvocation) {
-        CheckValue value = CheckValue.TRUE;
-        if (listDeclaration.size() != listInvocation.size()) return CheckValue.FALSE;
-
-        for (int i = 0; i < listInvocation.size(); i++) {
-            CheckValue compareType = compareType(listDeclaration.get(i), listInvocation.get(i));
-            if (compareType.getValue() < value.getValue()) value = compareType;
-            if (compareType == CheckValue.FALSE) return CheckValue.FALSE;
-        }
-        return value;
-    }
-
-
     @Override
     public boolean visit(ReturnStatement returnStatement) {
         ITypeBinding leftType = getMethodType(returnStatement);
@@ -207,7 +217,7 @@ class TypeCheckerVisitor extends ASTVisitor {
             ITypeBinding rightType = returnStatement.getExpression().resolveTypeBinding();
             return addValue(compareType(leftType, rightType));
         } else {
-            if (leftType.isPrimitive() && leftType.getName().equals("void")) {
+            if (leftType == null || (leftType.isPrimitive() && leftType.getName().equals("void"))) {
                 return addValue(CheckValue.TRUE);
             }
         }
@@ -216,8 +226,8 @@ class TypeCheckerVisitor extends ASTVisitor {
     }
 
     public ITypeBinding getMethodType(ASTNode astNode) {
-        if (astNode == null) return null;
         if (astNode instanceof MethodDeclaration) {
+            if (((MethodDeclaration) astNode).isConstructor()) return null;
             return ((MethodDeclaration) astNode).getReturnType2().resolveBinding();
         }
         return getMethodType(astNode.getParent());
