@@ -32,6 +32,7 @@ public class ProjectParser {
 
         System.out.println("Starting parse...");
         ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.ENCODE_SOURCE, Config.CLASS_PATH);
+        projectParser.parse();
 
         System.out.print("Project parse time: ");
         System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
@@ -122,7 +123,6 @@ public class ProjectParser {
         this.sourcePaths = sourcePaths;
         this.classPaths = classPaths;
         this.encodeSources = encodeSources;
-//        parse();
     }
 
     public void parseClass(ITypeBinding iTypeBinding) {
