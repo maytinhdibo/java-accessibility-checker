@@ -38,6 +38,11 @@ public class Config {
             "../../Research/java-data/cassandra/lib/servlet-api-2.5-20081211.jar"
     };
 
+    public static File[] IGNORE_FILES = new File[]{};
+
+    public int JDT_LEVEL = 13;
+    public String JAVA_VERSION = "13";
+
     public static String TEST_FILE_PATH = "../../Research/java-data/cassandra/src/java/org/apache/cassandra/config/KSMetaData.java";
     public static int TEST_POSITION = 1662;
 

@@ -13,9 +13,8 @@ import utils.Timer;
 import utils.Utils;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class ProjectParser {
@@ -32,7 +31,7 @@ public class ProjectParser {
 
         System.out.println("Starting parse...");
         ProjectParser projectParser = new ProjectParser(Config.PROJECT_DIR, Config.SOURCE_PATH, Config.ENCODE_SOURCE, Config.CLASS_PATH);
-        projectParser.parse();
+//        projectParser.parse();
 
         System.out.print("Project parse time: ");
         System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
@@ -43,7 +42,7 @@ public class ProjectParser {
         try {
             fileParser.parse();
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
 
         System.out.print("File parse: ");
@@ -56,27 +55,39 @@ public class ProjectParser {
 
 //        cassandra
         List<File> listFile = DirProcess.walkJavaFile(Config.PROJECT_DIR);
+        AtomicInteger numError = new AtomicInteger();
         listFile.forEach(file -> {
-            System.out.println(file.getAbsolutePath());
+//            System.out.println(file.getAbsolutePath());
 
             FileParser fileeParser = new FileParser(projectParser, file, Config.TEST_POSITION);
 
             try {
                 fileeParser.parse();
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
 
 
-            System.out.print("File parse: ");
-            System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
+//            System.out.print("File parse: ");
+//            System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
 
             List<IProblem> problemss = fileeParser.getErrors(0, 20000);
-            System.out.println(problemss.isEmpty());
+//            System.out.println(problemss.isEmpty());
 
-            System.out.print("Type check: ");
-            System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
+            if (!problemss.isEmpty()) {
+                numError.getAndIncrement();
+                problemss.forEach(problemNoti -> {
+                    System.out.println(problemNoti);
+                });
+                System.out.println(file.getAbsolutePath());
+
+            }
+
+//            System.out.print("Type check: ");
+//            System.out.printf("%.5fs\n", timer.getTimeCounter() / 1000.0);
         });
+
+        System.out.println("Number problems: " + numError);
 
         System.out.println("Parse done!");
     }
@@ -134,14 +145,14 @@ public class ProjectParser {
     }
 
     public CompilationUnit createCU(File file) {
-        ASTParser parser = ASTParser.newParser(AST.JLS13);//choose source code analyzing strategy
-        parser.setResolveBindings(true);// turn on binding strategy
+        ASTParser parser = ASTParser.newParser(Config.JDT_LEVEL); //choose source code analyzing strategy
+        parser.setResolveBindings(true); // turn on binding strategy
         parser.setKind(ASTParser.K_COMPILATION_UNIT);// the source code is a file .java
         parser.setBindingsRecovery(true);
         parser.setStatementsRecovery(true);
         Hashtable<String, String> options = JavaCore.getOptions();
 
-        JavaCore.setComplianceOptions(JavaCore.VERSION_13, options);
+        JavaCore.setComplianceOptions(Config.JAVA_VERSION, options);
 
         parser.setCompilerOptions(options);
         parser.setEnvironment(classPaths, sourcePaths, encodeSources, true);

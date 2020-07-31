@@ -18,5 +18,10 @@ public class Config {
     public static String TEST_FILE_PATH = "../../Research/java-data/lucene/lucene/src/java/org/apache/lucene/document/AbstractField.java";
     public static int TEST_POSITION = 1662;
 
+    public static File[] IGNORE_FILES = new File[]{};
+
+    public int JDT_LEVEL = 13;
+    public String JAVA_VERSION = "13";
+
     public static String LOG_DIR = "storage/output/";
 }
