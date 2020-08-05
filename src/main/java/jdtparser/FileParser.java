@@ -17,6 +17,8 @@ public class FileParser {
 
     private CompilationUnit cu;
 
+    private boolean isStatic = false;
+
     public List<Variable> visibleVariable = new ArrayList<>();
     public HashMap<String, ClassModel> visibleClass;
 
@@ -96,6 +98,7 @@ public class FileParser {
             block = (Block) astNode;
         } else if (astNode instanceof MethodDeclaration) {
             MethodDeclaration methodDeclaration = (MethodDeclaration) astNode;
+            isStatic = Modifier.isStatic(methodDeclaration.getModifiers());
 //            block = methodDeclaration.getBody();
 
             List params = methodDeclaration.parameters();
@@ -105,21 +108,27 @@ public class FileParser {
                     int position = singleVariableDeclaration.getStartPosition();
 
                     IVariableBinding variableBinding = singleVariableDeclaration.resolveBinding();
-                    addVariableToList(position, variableBinding);
+                    addVariableToList(position, variableBinding, true);
                 }
             });
+        } else if (astNode instanceof Initializer) {
+            Initializer initializer = (Initializer) astNode;
+            block = initializer.getBody();
+            isStatic = true;
         } else if (astNode instanceof TypeDeclaration) {
             FieldDeclaration[] fields = ((TypeDeclaration) astNode).getFields();
 
             for (FieldDeclaration field : fields) {
                 int position = field.getStartPosition();
                 List fragments = field.fragments();
+
                 fragments.forEach(fragment -> {
                     if (fragment instanceof VariableDeclarationFragment) {
                         VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) fragment;
                         IVariableBinding variableBinding = variableDeclarationFragment.resolveBinding();
 
-                        addVariableToList(position, variableBinding);
+                        boolean isStatic = Modifier.isStatic(variableBinding.getModifiers());
+                        addVariableToList(position, variableBinding, isStatic);
                     }
                 });
             }
@@ -132,7 +141,7 @@ public class FileParser {
                     int position = variableDeclarationFragment.getStartPosition();
                     IVariableBinding variableBinding = variableDeclarationFragment.resolveBinding();
 
-                    addVariableToList(position, variableBinding);
+                    addVariableToList(position, variableBinding, false);
                 }
             });
         } else if (astNode instanceof ForStatement) {
@@ -147,7 +156,7 @@ public class FileParser {
                         if (variableDeclarationItem instanceof VariableDeclarationFragment) {
                             IVariableBinding variableBinding = ((VariableDeclarationFragment) variableDeclarationItem).resolveBinding();
 
-                            addVariableToList(position, variableBinding);
+                            addVariableToList(position, variableBinding, false);
                         }
                     });
                 }
@@ -160,7 +169,7 @@ public class FileParser {
 
             IVariableBinding variableBinding = singleVariableDeclaration.resolveBinding();
 
-            addVariableToList(position, variableBinding);
+            addVariableToList(position, variableBinding, false);
         }
 
         if (block != null) {
@@ -172,7 +181,7 @@ public class FileParser {
                     declareStmt.fragments().forEach(fragment -> {
                         if (fragment instanceof VariableDeclarationFragment) {
                             IVariableBinding variableBinding = ((VariableDeclarationFragment) fragment).resolveBinding();
-                            addVariableToList(position, variableBinding);
+                            addVariableToList(position, variableBinding, false);
                         }
                     });
                 }
@@ -182,12 +191,17 @@ public class FileParser {
         getVariableScope(getParentBlock(astNode));
     }
 
-    private void addVariableToList(int startPosition, IVariableBinding variableBinding) {
+    private void addVariableToList(int startPosition, IVariableBinding variableBinding, boolean isStatic) {
         ITypeBinding typeBinding = variableBinding.getType();
         String varName = variableBinding.getName();
 
-        if (!checkVariableInList(varName, visibleVariable) && startPosition <= curPosition)
-            visibleVariable.add(new Variable(typeBinding, varName));
+        if (this.isStatic == true && isStatic == false) return;
+
+        if (!checkVariableInList(varName, visibleVariable) && startPosition <= curPosition) {
+            Variable variable = new Variable(typeBinding, varName);
+            variable.setStatic(isStatic);
+            visibleVariable.add(variable);
+        }
     }
 
     public static boolean checkVariableInList(String varName, List<Variable> variableList) {
@@ -205,7 +219,7 @@ public class FileParser {
         if (parentNode instanceof Block) {
 //            if (parentNode.getParent() instanceof MethodDeclaration) return parentNode.getParent();
             return (Block) parentNode; //block object
-        } else if (parentNode instanceof MethodDeclaration) {
+        } else if (parentNode instanceof MethodDeclaration || parentNode instanceof Initializer) {
             return parentNode;
         } else if (parentNode instanceof TypeDeclaration) {
             return parentNode;

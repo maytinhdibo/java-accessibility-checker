@@ -3,7 +3,7 @@ package data;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
 public class Variable {
-    int startPosition = -1;
+    private boolean isStatic = false;
     private ITypeBinding typeBinding;
     private String name;
 
@@ -26,6 +26,14 @@ public class Variable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
+    }
+
+    public void setStatic(boolean aStatic) {
+        isStatic = aStatic;
     }
 
     @Override
