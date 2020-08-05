@@ -123,16 +123,6 @@ public class FileParser {
                     }
                 });
             }
-
-//            ITypeBinding classBinding = ((TypeDeclaration) astNode).resolveBinding();
-//            IVariableBinding[] variableBindings = classBinding.getDeclaredFields();
-//            for (IVariableBinding variableBinding : variableBindings) {
-//                ITypeBinding typeBinding = variableBinding.getType();
-//                String varName = variableBinding.getName();
-//
-//                if (!checkVariableInList(varName, visibleVariable))
-//                    visibleVariable.add(new Variable(typeBinding, varName));
-//            }
         } else if (astNode instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) astNode;
             List params = lambdaExpression.parameters();
@@ -239,6 +229,17 @@ public class FileParser {
         });
         if (result[0] == null) throw new NullPointerException();
         return result[0].resolveBinding();
+    }
+
+    public boolean isBlockScope() {
+        //can code in this scope
+        ASTNode astNode = getScope(curPosition);
+        ASTNode parent = getParentBlock(astNode);
+        if ((parent instanceof TypeDeclaration) || parent == null) {
+            return false;
+        }
+
+        return true;
     }
 
     public ASTNode getScope(int position) {
