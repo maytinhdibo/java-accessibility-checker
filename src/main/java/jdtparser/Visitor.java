@@ -22,13 +22,13 @@ public class Visitor extends ASTVisitor {
         ITypeBinding typeBinding = variableDeclarationStatement.getType().resolveBinding();
         projectParser.parseClass(typeBinding);
         return true;
-    }
+    }*/
 
     public boolean visit(TypeDeclaration typeDeclaration) {
         ITypeBinding typeBinding = typeDeclaration.resolveBinding();
         projectParser.parseClass(typeBinding);
         return true;
-    }*/
+    }
 
     public boolean visit(SimpleType simpleType) {
         ITypeBinding typeBinding = simpleType.resolveBinding();
