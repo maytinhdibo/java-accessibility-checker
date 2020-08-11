@@ -20,7 +20,6 @@ public class Log {
         write(line, "warning.txt");
     }
 
-
     public static void write(String line, String filename) {
         File output = new File(Config.LOG_DIR + filename);
         try {

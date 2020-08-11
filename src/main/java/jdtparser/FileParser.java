@@ -15,6 +15,8 @@ public class FileParser {
     private File curFile;
     private int curPosition;
 
+    private ITypeBinding curClass;
+
     private CompilationUnit cu;
 
     private boolean isStatic = false;
@@ -70,7 +72,10 @@ public class FileParser {
     public void parse() throws Exception {
         try {
             ITypeBinding clazz = getClassScope(curPosition);
-            visibleClass = projectParser.getListAccess(clazz);
+            if (clazz != curClass) {
+                curClass = clazz;
+                visibleClass = projectParser.getListAccess(clazz);
+            }
         } catch (NullPointerException err) {
             visibleClass.clear();
             throw new Exception("Can not get class");
